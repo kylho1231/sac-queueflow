@@ -74,24 +74,22 @@ export function getNextSeqTicketNumber(
     return `${prefix}-001`;
   }
 
-  // Sort by issuedAt descending (newest first)
-  const sorted = [...validTickets].sort((a, b) => {
-    const timeA = a.issuedAt ? new Date(a.issuedAt).getTime() : 0;
-    const timeB = b.issuedAt ? new Date(b.issuedAt).getTime() : 0;
-    if (timeA !== timeB) return timeB - timeA;
-    return validTickets.indexOf(b) - validTickets.indexOf(a);
-  });
-
-  for (const tkt of sorted) {
+  // Find the highest sequence number in the list
+  let maxNum = 0;
+  for (const tkt of validTickets) {
     const match = tkt.ticketNumber.match(/\d+/);
     if (match) {
       const num = parseInt(match[0], 10);
-      if (!isNaN(num) && num >= 1) {
-        const nextNum = num >= 1000 ? 1 : num + 1;
-        return formatTicketNumber(nextNum, prefix);
+      if (!isNaN(num) && num > maxNum) {
+        maxNum = num;
       }
     }
   }
 
-  return `${prefix}-001`;
+  if (maxNum === 0) {
+    return `${prefix}-001`;
+  }
+
+  const nextNum = maxNum >= 1000 ? 1 : maxNum + 1;
+  return formatTicketNumber(nextNum, prefix);
 }

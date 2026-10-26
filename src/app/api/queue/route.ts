@@ -33,7 +33,7 @@ function getInitialState(): ServerQueueState {
       calledAt: new Date().toISOString(),
       isRecall: false,
     },
-    lastUpdated: Date.now(),
+    lastUpdated: 0,
   };
 }
 
@@ -53,7 +53,6 @@ function loadState(): ServerQueueState {
 
   const initial = getInitialState();
   globalThis.__SAC_SERVER_QUEUE_STATE = initial;
-  saveState(initial);
   return initial;
 }
 
@@ -80,6 +79,21 @@ export async function POST(req: NextRequest) {
     const state = loadState();
     const action = body.action as string;
     const nowIso = new Date().toISOString();
+
+    // 1. Direct state sync from client (guarantees zero divergence between cashier & server)
+    if (action === 'SYNC_CLIENT_STATE' || (body.tickets && Array.isArray(body.tickets))) {
+      if (body.tickets && Array.isArray(body.tickets)) {
+        state.tickets = body.tickets;
+      }
+      if (body.counters && Array.isArray(body.counters)) {
+        state.counters = body.counters;
+      }
+      if ('latestCallNotification' in body) {
+        state.latestCallNotification = body.latestCallNotification ?? null;
+      }
+      saveState(state);
+      return NextResponse.json({ success: true, state });
+    }
 
     if (action === 'CALL_NEXT') {
       const counterNumber = (body.counterNumber || 1) as WindowNumber;
@@ -120,12 +134,33 @@ export async function POST(req: NextRequest) {
           };
           state.tickets.push(nextTicket);
         }
+      } else if (body.preference === 'REGULAR') {
+        const waitingRegular = waitingList.find((t) => !isSeniorCitizenTicket(t));
+        if (waitingRegular) {
+          nextTicket = waitingRegular;
+        } else {
+          const nextNum = getNextSeqTicketNumber(state.tickets, 'C');
+          nextTicket = {
+            id: `tkt-csh-${Date.now()}`,
+            ticketNumber: nextNum,
+            officeId: 'off-cashier',
+            serviceId: 'srv-exam-period-payment',
+            studentId: `walkin-${Date.now()}`,
+            studentName: `Ticket ${nextNum}`,
+            isWalkIn: true,
+            qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+            lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
+            status: 'WAITING',
+            issuedAt: nowIso,
+            defermentCount: 0,
+            maxDefermentsAllowed: 1,
+            isSeniorCitizen: false,
+            ticketType: 'REGULAR',
+          };
+          state.tickets.push(nextTicket);
+        }
       } else {
-        // General calling: prioritize waiting Senior Citizens first (RA 9994 Priority Lane)
-        const prioritySenior = waitingList.find((t) => isSeniorCitizenTicket(t));
-        if (prioritySenior) {
-          nextTicket = prioritySenior;
-        } else if (waitingList.length > 0) {
+        if (waitingList.length > 0) {
           nextTicket = waitingList[0];
         } else {
           // Auto-generate the next sequential regular number (C-001 to C-1000)
@@ -250,11 +285,33 @@ export async function POST(req: NextRequest) {
           };
           state.tickets.push(nextTicket);
         }
+      } else if (body.preference === 'REGULAR') {
+        const waitingRegular = waitingList.find((t) => !isSeniorCitizenTicket(t));
+        if (waitingRegular) {
+          nextTicket = waitingRegular;
+        } else {
+          const nextNum = getNextSeqTicketNumber(state.tickets, 'C');
+          nextTicket = {
+            id: `tkt-csh-${Date.now()}`,
+            ticketNumber: nextNum,
+            officeId: 'off-cashier',
+            serviceId: 'srv-exam-period-payment',
+            studentId: `walkin-${Date.now()}`,
+            studentName: `Ticket ${nextNum}`,
+            isWalkIn: true,
+            qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+            lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
+            status: 'WAITING',
+            issuedAt: nowIso,
+            defermentCount: 0,
+            maxDefermentsAllowed: 1,
+            isSeniorCitizen: false,
+            ticketType: 'REGULAR',
+          };
+          state.tickets.push(nextTicket);
+        }
       } else {
-        const prioritySenior = waitingList.find((t) => isSeniorCitizenTicket(t));
-        if (prioritySenior) {
-          nextTicket = prioritySenior;
-        } else if (waitingList.length > 0) {
+        if (waitingList.length > 0) {
           nextTicket = waitingList[0];
         } else {
           const nextNum = getNextSeqTicketNumber(state.tickets, 'C');

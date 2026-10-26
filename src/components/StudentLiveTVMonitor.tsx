@@ -131,6 +131,13 @@ export default function StudentLiveTVMonitor() {
   const getServingTicketForWindow = (win: WindowNumber) => {
     const rawServing = nowServingTicket(win);
     if (latestCallNotification?.windowNumber === win && latestCallNotification.ticketNumber) {
+      // Check if this ticket was finished / completed so we do not resurrect completed tickets
+      const isFinished = tickets.some(
+        t => t.ticketNumber === latestCallNotification.ticketNumber && (t.status === 'COMPLETED' || t.status === 'SKIPPED' || t.status === 'NO_SHOW')
+      );
+      if (isFinished) {
+        return rawServing;
+      }
       if (rawServing?.ticketNumber === latestCallNotification.ticketNumber) {
         return rawServing;
       }

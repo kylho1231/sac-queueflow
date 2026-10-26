@@ -129,9 +129,9 @@ function CashierTerminalContent() {
     }, 400);
   };
 
-  // Call Next Ticket Handler (General Queue)
+  // Call Next Ticket Handler (General Regular Student Queue)
   const handleCallNext = () => {
-    const called = callNextTicket(activeCounterNum);
+    const called = callNextTicket(activeCounterNum, 'REGULAR');
     if (called) {
       announceTicket(called.ticketNumber, activeCounterNum);
     }
@@ -156,7 +156,8 @@ function CashierTerminalContent() {
   // Complete and Immediately Call Next Student Handler
   const handleCompleteAndCallNext = () => {
     if (currentTicket) {
-      const nextTkt = completeAndCallNext(currentTicket.id, activeCounterNum);
+      const pref = isSeniorCitizenTicket(currentTicket) && waitingSeniorsCount > 0 ? 'SENIOR_CITIZEN' : 'REGULAR';
+      const nextTkt = completeAndCallNext(currentTicket.id, activeCounterNum, pref);
       if (nextTkt) {
         announceTicket(nextTkt.ticketNumber, activeCounterNum);
       }

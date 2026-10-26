@@ -196,7 +196,8 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
         if (!res.ok) return;
         const data = await res.json();
         if (!isMounted) return;
-        if (data.lastUpdated && data.lastUpdated > lastServerTimestampRef.current) {
+        // Only accept if server has actual non-zero timestamp newer than local reference
+        if (data.lastUpdated && data.lastUpdated > 0 && data.lastUpdated > lastServerTimestampRef.current) {
           lastServerTimestampRef.current = data.lastUpdated;
           if (data.tickets && Array.isArray(data.tickets)) {
             setTickets(data.tickets);
@@ -207,13 +208,17 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
           if (data.counters && Array.isArray(data.counters)) {
             setCounters(data.counters);
           }
-          if (data.latestCallNotification) {
+          if (data.latestCallNotification !== undefined) {
             setLatestCallNotification(data.latestCallNotification);
             try {
-              localStorage.setItem(
-                'sac_latest_call_notification',
-                JSON.stringify(data.latestCallNotification)
-              );
+              if (data.latestCallNotification) {
+                localStorage.setItem(
+                  'sac_latest_call_notification',
+                  JSON.stringify(data.latestCallNotification)
+                );
+              } else {
+                localStorage.removeItem('sac_latest_call_notification');
+              }
             } catch {}
           }
         }
@@ -232,12 +237,14 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   const broadcastSync = (
     updatedTickets: QueueTicket[], 
     updatedCounters: ServiceCounter[] = counters,
-    callNotification?: ActiveCallNotification
+    callNotification?: ActiveCallNotification | null
   ) => {
     try {
       localStorage.setItem('sac_cashier_tickets', JSON.stringify(updatedTickets));
       if (callNotification) {
         localStorage.setItem('sac_latest_call_notification', JSON.stringify(callNotification));
+      } else if (callNotification === null) {
+        localStorage.removeItem('sac_latest_call_notification');
       }
     } catch {}
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -246,12 +253,25 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
         bc.postMessage({ 
           type: 'SYNC_STATE', 
           tickets: updatedTickets, 
-          counters: updatedCounters,
+          counters: updatedCounters, 
           callNotification 
         });
         bc.close();
       } catch {}
     }
+
+    // Instantly sync authoritative state to Server API (ensures cross-device and remote TV accuracy)
+    lastServerTimestampRef.current = Date.now();
+    fetch('/api/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'SYNC_CLIENT_STATE',
+        tickets: updatedTickets,
+        counters: updatedCounters,
+        latestCallNotification: callNotification ?? null,
+      }),
+    }).catch(() => {});
   };
 
   const dismissToast = (id: string) => {
@@ -338,7 +358,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
 
   // 3. Cashier Calls Next Ticket (NEVER FAILS: Auto-generates next if queue is empty)
   // Supports Priority Lane for Senior Citizens (S-001 to S-1000)
-  const callNextTicket = (counterNumber: WindowNumber, preference: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN' = 'ANY'): QueueTicket => {
+  const callNextTicket = (counterNumber: WindowNumber, preference: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN' = 'REGULAR'): QueueTicket => {
     const counter = counters.find(c => c.counterNumber === counterNumber);
     const nowIso = new Date().toISOString();
 
@@ -377,15 +397,37 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
         };
         baseTickets.push(nextTicket);
       }
+    } else if (preference === 'REGULAR') {
+      const waitingRegular = waitingTickets.find(t => !isSeniorCitizenTicket(t));
+      if (waitingRegular) {
+        nextTicket = waitingRegular;
+      } else {
+        // Auto-generate the next sequential regular number (C-001 to C-1000)
+        const nextNum = getNextSeqTicketNumber(tickets, 'C');
+        nextTicket = {
+          id: `tkt-csh-${Date.now()}`,
+          ticketNumber: nextNum,
+          officeId: 'off-cashier',
+          serviceId: 'srv-exam-period-payment',
+          studentId: `walkin-${Date.now()}`,
+          studentName: `Ticket ${nextNum}`,
+          isWalkIn: true,
+          qrToken: generateQRToken(nextNum),
+          lookupCode: generateLookupCode(nextNum),
+          status: 'WAITING',
+          issuedAt: nowIso,
+          defermentCount: 0,
+          maxDefermentsAllowed: 1,
+          isSeniorCitizen: false,
+          ticketType: 'REGULAR',
+        };
+        baseTickets.push(nextTicket);
+      }
     } else {
-      // General calling: If there is a waiting Senior Citizen, prioritize them (Priority Lane)
-      const prioritySenior = waitingTickets.find(t => isSeniorCitizenTicket(t));
-      if (prioritySenior) {
-        nextTicket = prioritySenior;
-      } else if (waitingTickets.length > 0) {
+      // preference === 'ANY'
+      if (waitingTickets.length > 0) {
         nextTicket = waitingTickets[0];
       } else {
-        // Auto-generate the next sequential regular number so the cashier is NEVER blocked
         const nextNum = getNextSeqTicketNumber(tickets, 'C');
         nextTicket = {
           id: `tkt-csh-${Date.now()}`,
@@ -456,18 +498,6 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     setLatestCallNotification(callNotif);
     broadcastSync(updatedTickets, updatedCounters, callNotif);
 
-    // Sync to Server API
-    fetch('/api/queue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        action: 'CALL_NEXT', 
-        counterNumber,
-        isSeniorCitizen: isSenior,
-        preference 
-      }),
-    }).catch(() => {});
-
     showToast(
       isSenior ? 'Priority Lane Called' : 'Now Calling',
       `Ticket ${nextTicket.ticketNumber}${isSenior ? ' (Senior Citizen)' : ''} called to Cashier Window ${counterNumber}!`, 
@@ -485,7 +515,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   const completeAndCallNext = (
     ticketId: string, 
     counterNumber: WindowNumber,
-    preference: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN' = 'ANY'
+    preference: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN' = 'REGULAR'
   ): QueueTicket => {
     const counter = counters.find(c => c.counterNumber === counterNumber);
     const nowIso = new Date().toISOString();
@@ -532,12 +562,33 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
         };
         baseList.push(nextTicket);
       }
+    } else if (preference === 'REGULAR') {
+      const waitingRegular = waitingTickets.find(t => !isSeniorCitizenTicket(t));
+      if (waitingRegular) {
+        nextTicket = waitingRegular;
+      } else {
+        const nextNum = getNextSeqTicketNumber(completedList, 'C');
+        nextTicket = {
+          id: `tkt-csh-${Date.now()}`,
+          ticketNumber: nextNum,
+          officeId: 'off-cashier',
+          serviceId: 'srv-exam-period-payment',
+          studentId: `walkin-${Date.now()}`,
+          studentName: `Ticket ${nextNum}`,
+          isWalkIn: true,
+          qrToken: generateQRToken(nextNum),
+          lookupCode: generateLookupCode(nextNum),
+          status: 'WAITING',
+          issuedAt: nowIso,
+          defermentCount: 0,
+          maxDefermentsAllowed: 1,
+          isSeniorCitizen: false,
+          ticketType: 'REGULAR',
+        };
+        baseList.push(nextTicket);
+      }
     } else {
-      // General calling: prioritize waiting Senior Citizens first
-      const prioritySenior = waitingTickets.find(t => isSeniorCitizenTicket(t));
-      if (prioritySenior) {
-        nextTicket = prioritySenior;
-      } else if (waitingTickets.length > 0) {
+      if (waitingTickets.length > 0) {
         nextTicket = waitingTickets[0];
       } else {
         const nextNum = getNextSeqTicketNumber(completedList, 'C');
@@ -610,19 +661,6 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     setLatestCallNotification(callNotif);
     broadcastSync(finalTickets, updatedCounters, callNotif);
 
-    // Sync to Server API
-    fetch('/api/queue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        action: 'COMPLETE_AND_CALL_NEXT', 
-        ticketId, 
-        counterNumber, 
-        isSeniorCitizen: isSenior,
-        preference 
-      }),
-    }).catch(() => {});
-
     showToast(
       isSenior ? 'Served & Called Priority' : 'Served & Called Next',
       `Ticket ${nextTicket.ticketNumber}${isSenior ? ' (Senior Citizen)' : ''} summoned to Window ${counterNumber}!`, 
@@ -680,6 +718,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   const completeServing = (ticketId: string) => {
     const nowIso = new Date().toISOString();
     const tkt = tickets.find(t => t.id === ticketId);
+    const winNum = tkt?.assignedCounterNumber;
 
     const updatedTickets = tickets.map(t => {
       if (t.id === ticketId) {
@@ -697,15 +736,15 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
         })
       : counters;
 
+    let nextNotif = latestCallNotification;
+    if (latestCallNotification && (latestCallNotification.ticketNumber === tkt?.ticketNumber || (winNum && latestCallNotification.windowNumber === winNum))) {
+      nextNotif = null;
+      setLatestCallNotification(null);
+    }
+
     setTickets(updatedTickets);
     setCounters(updatedCounters);
-    broadcastSync(updatedTickets, updatedCounters);
-
-    fetch('/api/queue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'COMPLETE', ticketId }),
-    }).catch(() => {});
+    broadcastSync(updatedTickets, updatedCounters, nextNotif);
 
     showToast('Transaction Finished', `Payment receipt processed. Counter is now open.`, 'success');
   };
@@ -715,19 +754,13 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     setTickets(updated);
     broadcastSync(updated);
 
-    fetch('/api/queue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'SKIP', ticketId, callNext: false }),
-    }).catch(() => {});
-
     showToast('Ticket Skipped', `Ticket moved to skipped queue.`, 'warning');
   };
 
   const skipAndCallNext = (ticketId: string, counterNumber: WindowNumber): QueueTicket => {
     const updated = tickets.map(t => t.id === ticketId ? { ...t, status: 'SKIPPED' as const } : t);
     setTickets(updated);
-    return completeAndCallNext(ticketId, counterNumber);
+    return completeAndCallNext(ticketId, counterNumber, 'REGULAR');
   };
 
   const markNoShow = (ticketId: string) => {
@@ -735,19 +768,13 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     setTickets(updated);
     broadcastSync(updated);
 
-    fetch('/api/queue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'NO_SHOW', ticketId, callNext: false }),
-    }).catch(() => {});
-
     showToast('Marked No-Show', `Student was absent after the arrival period.`, 'alert');
   };
 
   const markNoShowAndCallNext = (ticketId: string, counterNumber: WindowNumber): QueueTicket => {
     const updated = tickets.map(t => t.id === ticketId ? { ...t, status: 'NO_SHOW' as const } : t);
     setTickets(updated);
-    return completeAndCallNext(ticketId, counterNumber);
+    return completeAndCallNext(ticketId, counterNumber, 'REGULAR');
   };
 
   // 4. Print New Physical Queue Slip (Form FO 07 Compliant)
