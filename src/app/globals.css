@@ -2,22 +2,23 @@
 
 @layer base {
   :root {
-    /* St. Anthony's College Official Identity Colors */
-    --sac-blue: #1E3A8A; /* Royal SAC Blue */
-    --sac-dark-blue: #0F172A;
-    --sac-gold: #F59E0B; /* Official Gold */
-    --sac-light-gold: #FEF08A;
-    --sac-cream: #FFFBEB;
+    /* St. Anthony's College Official Identity Colors (from Logo) */
+    --sac-amber: #EA671B; /* Golden Amber / Warm Terracotta from seal */
+    --sac-maroon: #751A1A; /* Deep Crimson Maroon from lettering & cross */
+    --sac-dark-maroon: #5A1212;
+    --sac-cream: #FFF8F1;
+    --sac-amber-light: #FFEDD5;
     
-    --background: #F8FAFC;
-    --foreground: #0F172A;
+    /* Pure White Prime Color Theme */
+    --background: #FFFFFF; /* Pure White prime background */
+    --foreground: #1C1917; /* Deep readable contrast */
     --card: #FFFFFF;
-    --card-foreground: #0F172A;
-    --primary: #1E3A8A;
+    --card-foreground: #1C1917;
+    --primary: #751A1A;
     --primary-foreground: #FFFFFF;
-    --secondary: #F59E0B;
-    --secondary-foreground: #0F172A;
-    --border: #E2E8F0;
+    --secondary: #EA671B;
+    --secondary-foreground: #FFFFFF;
+    --border: #F1F5F9;
     --radius: 1rem;
   }
 }
