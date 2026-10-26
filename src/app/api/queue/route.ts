@@ -122,8 +122,15 @@ export async function POST(req: NextRequest) {
         state.tickets.push(nextTicket);
       }
 
-      // Mark the ticket as CALLED
+      // Mark the ticket as CALLED, and complete any prior ticket on this counter
       state.tickets = state.tickets.map((t) => {
+        if (t.assignedCounterNumber === counterNumber && t.id !== nextTicket.id && (t.status === 'CALLED' || t.status === 'SERVING')) {
+          return {
+            ...t,
+            status: 'COMPLETED' as const,
+            completedAt: nowIso,
+          };
+        }
         if (t.id === nextTicket.id) {
           return {
             ...t,
@@ -203,8 +210,15 @@ export async function POST(req: NextRequest) {
         state.tickets.push(nextTicket);
       }
 
-      // 3. Mark next ticket as CALLED
+      // 3. Mark next ticket as CALLED, and complete any prior ticket on this counter
       state.tickets = state.tickets.map((t) => {
+        if (t.assignedCounterNumber === counterNum && t.id !== nextTicket.id && (t.status === 'CALLED' || t.status === 'SERVING')) {
+          return {
+            ...t,
+            status: 'COMPLETED' as const,
+            completedAt: nowIso,
+          };
+        }
         if (t.id === nextTicket.id) {
           return {
             ...t,

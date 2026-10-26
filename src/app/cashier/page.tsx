@@ -63,11 +63,9 @@ function CashierTerminalContent() {
   // Service timer calculation
   const [servingDuration, setServingDuration] = useState<string>('00:00');
 
-  // Currently serving ticket for this cashier's window
+  // Currently serving ticket for this cashier's window (always picks the newest active ticket)
   const activeCounterNum = cashierUser?.counterNumber || 1;
-  const currentTicket = tickets.find(
-    t => t.assignedCounterNumber === activeCounterNum && (t.status === 'CALLED' || t.status === 'SERVING')
-  );
+  const currentTicket = nowServingTicket(activeCounterNum);
 
   const servingC1 = nowServingTicket(1);
   const servingC2 = nowServingTicket(2);

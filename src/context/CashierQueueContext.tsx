@@ -202,7 +202,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
 
     // Initial check
     pollServerState();
-    const interval = setInterval(pollServerState, 2000);
+    const interval = setInterval(pollServerState, 1000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -375,6 +375,14 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     };
 
     const updatedTickets = baseTickets.map(t => {
+      // Mark any prior ticket on this counter as COMPLETED so it doesn't linger
+      if (t.assignedCounterNumber === counterNumber && t.id !== nextTicket.id && (t.status === 'CALLED' || t.status === 'SERVING')) {
+        return {
+          ...t,
+          status: 'COMPLETED' as const,
+          completedAt: nowIso,
+        };
+      }
       if (t.id === nextTicket.id) {
         return {
           ...t,
@@ -467,6 +475,14 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     };
 
     const finalTickets = baseList.map(t => {
+      // Mark any prior ticket on this counter as COMPLETED
+      if (t.assignedCounterNumber === counterNumber && t.id !== nextTicket.id && (t.status === 'CALLED' || t.status === 'SERVING')) {
+        return {
+          ...t,
+          status: 'COMPLETED' as const,
+          completedAt: nowIso,
+        };
+      }
       if (t.id === nextTicket.id) {
         return {
           ...t,
@@ -667,9 +683,12 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     return newTicket;
   };
 
-  // Helper for Cashier Window status
+  // Helper for Cashier Window status: finds the latest active called/serving ticket for this window
   const nowServingTicket = (counterNumber: 1 | 2) => {
-    return tickets.find(t => t.assignedCounterNumber === counterNumber && (t.status === 'CALLED' || t.status === 'SERVING'));
+    const matching = tickets
+      .filter(t => t.assignedCounterNumber === counterNumber && (t.status === 'CALLED' || t.status === 'SERVING'))
+      .sort((a, b) => new Date(b.calledAt || b.issuedAt).getTime() - new Date(a.calledAt || a.issuedAt).getTime());
+    return matching[0];
   };
 
   const upNextTickets = tickets

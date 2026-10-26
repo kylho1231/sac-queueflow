@@ -124,8 +124,33 @@ export default function StudentLiveTVMonitor() {
     });
   }, [latestCallNotification, audioEnabled]);
 
-  const servingC1 = nowServingTicket(1);
-  const servingC2 = nowServingTicket(2);
+  // Active window serving tickets: perfectly synchronized with latestCallNotification for zero-latency UI matching
+  const rawServingC1 = nowServingTicket(1);
+  const rawServingC2 = nowServingTicket(2);
+
+  const servingC1 = (latestCallNotification?.windowNumber === 1 && latestCallNotification.ticketNumber)
+    ? (rawServingC1?.ticketNumber === latestCallNotification.ticketNumber ? rawServingC1 : {
+        ...rawServingC1,
+        id: latestCallNotification.id,
+        ticketNumber: latestCallNotification.ticketNumber,
+        studentName: latestCallNotification.studentName || `Ticket ${latestCallNotification.ticketNumber}`,
+        calledAt: latestCallNotification.calledAt,
+        status: 'CALLED' as const,
+        assignedCounterNumber: 1,
+      })
+    : rawServingC1;
+
+  const servingC2 = (latestCallNotification?.windowNumber === 2 && latestCallNotification.ticketNumber)
+    ? (rawServingC2?.ticketNumber === latestCallNotification.ticketNumber ? rawServingC2 : {
+        ...rawServingC2,
+        id: latestCallNotification.id,
+        ticketNumber: latestCallNotification.ticketNumber,
+        studentName: latestCallNotification.studentName || `Ticket ${latestCallNotification.ticketNumber}`,
+        calledAt: latestCallNotification.calledAt,
+        status: 'CALLED' as const,
+        assignedCounterNumber: 2,
+      })
+    : rawServingC2;
 
   // Time format helper for recent tickets (SSR / prerender-safe)
   const formatTimeAgo = (isoString?: string) => {
