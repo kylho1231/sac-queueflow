@@ -6,7 +6,7 @@ import { QueueProvider } from '@/context/QueueContext';
 import { NavigationHeader } from '@/components/NavigationHeader';
 import { StudentDashboard } from '@/components/StudentDashboard';
 import { ToastContainer } from '@/components/ToastContainer';
-import { Tv, ShieldCheck, UserCheck } from 'lucide-react';
+import { Tv } from 'lucide-react';
 
 export default function StudentPortalPage() {
   return (
@@ -40,36 +40,15 @@ export default function StudentPortalPage() {
           <ToastContainer />
         </main>
 
-        {/* Discreet institutional footer with portal links */}
+        {/* Institutional Student Footer */}
         <footer className="border-t border-teal-100/80 bg-white/90 py-8 px-4 text-xs text-slate-500 mt-12">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-center sm:text-left">
-              <p className="font-bold text-slate-700">
-                SAC QueueFlow &bull; St. Anthony&apos;s College, San Jose de Buenavista, Antique, Philippines
-              </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Philippine Data Privacy Act Compliant &bull; Safe Queuing for Antonians Anywhere
-              </p>
-            </div>
-
-            {/* Separate Portals Footer Navigation for Authorized College Staff */}
-            <div className="flex items-center space-x-4 text-xs font-semibold">
-              <span className="text-slate-400 text-[11px]">Staff Access:</span>
-              <Link
-                href="/staff"
-                className="text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-1"
-              >
-                <UserCheck className="w-3.5 h-3.5" />
-                <span>Staff Desk</span>
-              </Link>
-              <Link
-                href="/admin"
-                className="text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-1"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Admin Console</span>
-              </Link>
-            </div>
+          <div className="max-w-7xl mx-auto text-center">
+            <p className="font-bold text-slate-700">
+              SAC QueueFlow &bull; St. Anthony&apos;s College, San Jose de Buenavista, Antique, Philippines
+            </p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              Philippine Data Privacy Act Compliant &bull; Safe Queuing for Antonians Anywhere
+            </p>
           </div>
         </footer>
       </div>
