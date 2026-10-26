@@ -22,6 +22,13 @@ import {
 } from '@/lib/initial-data';
 import { generateLookupCode, generateQRToken } from '@/lib/utils';
 
+export interface ToastMessage {
+  id: string;
+  title: string;
+  message: string;
+  type: 'success' | 'info' | 'warning' | 'alert';
+}
+
 interface QueueContextType {
   // Current user state
   currentRole: UserRole;
@@ -38,6 +45,9 @@ interface QueueContextType {
   events: QueueEvent[];
   notifications: QueueNotification[];
   announcements: CampusAnnouncement[];
+  toasts: ToastMessage[];
+  dismissToast: (id: string) => void;
+  showToast: (title: string, message: string, type?: ToastMessage['type']) => void;
 
   // Student Actions
   joinQueue: (officeId: string, serviceId: string, studentName?: string, studentNumber?: string) => QueueTicket;
@@ -79,6 +89,19 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   const [events, setEvents] = useState<QueueEvent[]>([]);
   const [notifications, setNotifications] = useState<QueueNotification[]>(INITIAL_NOTIFICATIONS);
   const [announcements, setAnnouncements] = useState<CampusAnnouncement[]>(INITIAL_ANNOUNCEMENTS);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const dismissToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  const showToast = (title: string, message: string, type: ToastMessage['type'] = 'info') => {
+    const id = 'toast-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+    setToasts(prev => [...prev.slice(-3), { id, title, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  };
 
   // Helper: Find ticket currently being served for an office
   const nowServingTicket = (officeId: string) => {
@@ -506,6 +529,9 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
         events,
         notifications,
         announcements,
+        toasts,
+        dismissToast,
+        showToast,
         joinQueue,
         requestDeferment,
         resumeDeferredTicket,

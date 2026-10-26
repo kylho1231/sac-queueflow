@@ -31,7 +31,8 @@ export function StudentDashboard() {
     resumeDeferredTicket, 
     cancelTicket,
     announcements,
-    nowServingTicket
+    nowServingTicket,
+    showToast
   } = useQueue();
 
   // Dialog / Modal states
@@ -69,7 +70,8 @@ export function StudentDashboard() {
       alert('Please select both an office and a specific service.');
       return;
     }
-    joinQueue(selectedOfficeId, selectedServiceId);
+    const created = joinQueue(selectedOfficeId, selectedServiceId);
+    showToast(`Queue Ticket Issued: ${created.ticketNumber}`, 'Your pass is now active in line. Live updates enabled.', 'success');
     setShowJoinModal(false);
     setSelectedServiceId('');
   };
@@ -77,6 +79,7 @@ export function StudentDashboard() {
   const handleConfirmDefer = () => {
     if (showDeferModal) {
       requestDeferment(showDeferModal.id, deferReason);
+      showToast('Class Deferment Activated', `Ticket ${showDeferModal.ticketNumber} is held. Resume when lecture ends.`, 'warning');
       setShowDeferModal(null);
     }
   };
@@ -250,7 +253,7 @@ export function StudentDashboard() {
                         <Users className="w-4 h-4 text-teal-600" aria-hidden="true" />
                         <span>Students Ahead</span>
                       </span>
-                      <span className="text-2xl font-black text-slate-900 mt-1 block">
+                      <span className="text-2xl font-black text-slate-900 mt-1 block" role="status" aria-atomic="true">
                         {isServing ? '0 (At Window)' : isCalled ? '0 (Your Turn)' : estimate.studentsAhead}
                       </span>
                     </div>
@@ -260,9 +263,32 @@ export function StudentDashboard() {
                         <Clock className="w-4 h-4 text-teal-600" aria-hidden="true" />
                         <span>Estimated Wait</span>
                       </span>
-                      <span className="text-xs font-bold text-teal-900 mt-1 block truncate" title={estimate.formattedEstimate}>
+                      <span className="text-xs font-bold text-teal-900 mt-1 block truncate" title={estimate.formattedEstimate} role="status">
                         {estimate.formattedEstimate}
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Multi-step Visual Queue Progression Track */}
+                  <div className="mt-4 p-3 bg-slate-50/80 rounded-2xl border border-slate-200/70">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      <span className={ticket.status === 'WAITING' ? 'text-teal-800' : ''}>1. In Line</span>
+                      <span className={estimate.studentsAhead <= 2 && ticket.status === 'WAITING' ? 'text-amber-800' : ''}>2. Approaching</span>
+                      <span className={isCalled ? 'text-rose-700 animate-pulse' : ''}>3. Called</span>
+                      <span className={isServing ? 'text-emerald-700' : ''}>4. At Window</span>
+                    </div>
+                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden flex">
+                      <div 
+                        className={`h-full transition-all duration-500 ${
+                          isServing 
+                            ? 'w-full bg-emerald-500' 
+                            : isCalled 
+                            ? 'w-3/4 bg-rose-500' 
+                            : estimate.studentsAhead <= 2 
+                            ? 'w-1/2 bg-amber-500' 
+                            : 'w-1/4 bg-teal-600'
+                        }`} 
+                      />
                     </div>
                   </div>
 

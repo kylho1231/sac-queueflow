@@ -32,7 +32,8 @@ export function StaffDashboard() {
     markNoShow,
     pauseCounter,
     resumeCounter,
-    createWalkInTicket
+    createWalkInTicket,
+    showToast
   } = useQueue();
 
   const currentOffice = offices.find(o => o.id === currentStaffOfficeId) || offices[0];
@@ -79,10 +80,10 @@ export function StaffDashboard() {
            t.ticketNumber.toLowerCase() === verificationCodeInput.trim().toLowerCase()
     );
     if (found) {
-      alert(`Valid Ticket Found: ${found.ticketNumber} for ${found.studentName}. Status: ${found.status}`);
+      showToast('Student Pass Verified', `${found.ticketNumber} • ${found.studentName}`, 'success');
       setVerificationCodeInput('');
     } else {
-      alert(`No active ticket found matching verification code "${verificationCodeInput}".`);
+      showToast('Validation Error', `No active ticket found for "${verificationCodeInput}".`, 'alert');
     }
   };
 
@@ -239,9 +240,19 @@ export function StaffDashboard() {
                     {services.find(s => s.id === currentCounterTicket.serviceId)?.name}
                   </div>
                   <div className="mt-3 inline-flex items-center space-x-2 text-xs font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
-                    <span className="w-2 h-2 rounded-full bg-amber-600" />
+                    <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
                     <span>Status: {currentCounterTicket.status}</span>
                   </div>
+
+                  {/* Active Service Duration Indicator */}
+                  {currentCounterTicket.status === 'SERVING' && currentCounterTicket.serviceStartedAt && (
+                    <div className="mt-3 inline-flex items-center space-x-2 text-xs font-mono font-bold px-3 py-1 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300">
+                      <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>
+                        Service Duration: {Math.max(1, Math.round((currentTimeMs - new Date(currentCounterTicket.serviceStartedAt).getTime()) / 60000))} mins
+                      </span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="my-8">

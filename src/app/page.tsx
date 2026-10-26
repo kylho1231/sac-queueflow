@@ -7,6 +7,7 @@ import { StudentDashboard } from '@/components/StudentDashboard';
 import { StaffDashboard } from '@/components/StaffDashboard';
 import { AdminAnalytics } from '@/components/AdminAnalytics';
 import { TVQueueDisplay } from '@/components/TVQueueDisplay';
+import { ToastContainer } from '@/components/ToastContainer';
 import { Tv } from 'lucide-react';
 
 function MainAppShell() {
@@ -54,6 +55,9 @@ function MainAppShell() {
         {currentRole === 'student' && <StudentDashboard />}
         {currentRole === 'staff' && <StaffDashboard />}
         {currentRole === 'admin' && <AdminAnalytics />}
+
+        {/* Global Toast Alerts */}
+        <ToastContainer />
       </main>
 
       <footer className="border-t border-teal-100/80 bg-white py-6 text-center text-xs text-slate-500">
