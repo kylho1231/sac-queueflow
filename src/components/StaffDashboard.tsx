@@ -118,8 +118,10 @@ export function StaffDashboard() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Switch Office */}
           <div className="flex items-center space-x-2">
-            <span className="text-xs font-medium text-slate-500">Office:</span>
+            <label htmlFor="staff-office-select" className="text-xs font-medium text-slate-500">Office:</label>
             <select
+              id="staff-office-select"
+              aria-label="Select staff office"
               value={currentStaffOfficeId}
               onChange={e => {
                 setCurrentStaffOfficeId(e.target.value);
@@ -136,8 +138,10 @@ export function StaffDashboard() {
 
           {/* Switch Counter */}
           <div className="flex items-center space-x-2">
-            <span className="text-xs font-medium text-slate-500">Counter:</span>
+            <label htmlFor="staff-counter-select" className="text-xs font-medium text-slate-500">Counter:</label>
             <select
+              id="staff-counter-select"
+              aria-label="Select service counter"
               value={selectedCounterId}
               onChange={e => setSelectedCounterId(e.target.value)}
               className="bg-teal-50 border border-teal-300 rounded-xl px-3 py-1.5 text-xs font-bold text-teal-950 outline-hidden"
@@ -373,8 +377,13 @@ export function StaffDashboard() {
               <span>Verify Student Ticket / QR Pass</span>
             </h3>
             <form onSubmit={handleManualVerification} className="flex gap-2">
+              <label htmlFor="verify-ticket-code-input" className="sr-only">
+                Scan QR token or type verification code
+              </label>
               <input
+                id="verify-ticket-code-input"
                 type="text"
+                aria-label="Student verification QR or ticket code"
                 placeholder="Scan QR token or type verification code (e.g. R-036 or R036-9932)..."
                 value={verificationCodeInput}
                 onChange={e => setVerificationCodeInput(e.target.value)}
@@ -382,7 +391,7 @@ export function StaffDashboard() {
               />
               <button
                 type="submit"
-                className="bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
+                className="min-h-[44px] bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-colors cursor-pointer"
               >
                 Validate Pass
               </button>
@@ -483,10 +492,11 @@ export function StaffDashboard() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                <label htmlFor="walk-in-service-select" className="text-xs font-semibold text-slate-700 block mb-1">
                   Service Category
                 </label>
                 <select
+                  id="walk-in-service-select"
                   value={walkInServiceId}
                   onChange={e => setWalkInServiceId(e.target.value)}
                   required

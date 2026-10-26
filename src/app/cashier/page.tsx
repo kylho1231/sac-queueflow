@@ -210,7 +210,7 @@ function CashierTerminalContent() {
             <div className="flex justify-center mb-3">
               <SACLogo className="w-20 h-20 drop-shadow-md" />
             </div>
-            <span className="text-[10px] font-extrabold text-[#EA671B] bg-white px-2.5 py-0.5 rounded-full uppercase tracking-widest inline-block mb-1">
+            <span className="text-[10px] font-extrabold text-[#B44606] bg-white px-2.5 py-0.5 rounded-full uppercase tracking-widest inline-block mb-1">
               ST. ANTHONY&apos;S COLLEGE &bull; SAN JOSE, ANTIQUE
             </span>
             <h1 className="text-2xl font-black tracking-tight mt-1 text-white">
@@ -264,12 +264,13 @@ function CashierTerminalContent() {
 
             {/* Email Address Input */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label htmlFor="cashier-email-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Cashier Gmail / Official Email:
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" aria-hidden="true" />
                 <input
+                  id="cashier-email-input"
                   type="email"
                   value={emailInput}
                   onChange={e => setEmailInput(e.target.value)}
@@ -288,12 +289,12 @@ function CashierTerminalContent() {
                 type="button"
                 onClick={handleSendOtp}
                 disabled={isSendingOtp || !emailInput}
-                className="w-full bg-[#751A1A] hover:bg-[#5A1212] text-white font-black py-3 px-4 rounded-xl text-sm transition-all shadow-md flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+                className="w-full min-h-[44px] bg-[#751A1A] hover:bg-[#5A1212] text-white font-black py-3 px-4 rounded-xl text-sm transition-all shadow-md flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
               >
                 {isSendingOtp ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4 h-4" aria-hidden="true" />
                 )}
                 <span>Send One-Time Passcode (OTP)</span>
               </button>
@@ -301,7 +302,7 @@ function CashierTerminalContent() {
               /* OTP Code Input Box */
               <div className="space-y-4 pt-2 border-t border-slate-100">
                 <div className="p-3 bg-[#FFF8F1] border border-[#EA671B]/30 rounded-2xl text-xs text-[#751A1A] flex items-start space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#EA671B] mt-0.5 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-[#EA671B] mt-0.5 shrink-0" aria-hidden="true" />
                   <div>
                     <p className="font-bold">Passcode Dispatched to Gmail!</p>
                     <p className="text-[11px] text-slate-600 mt-0.5">
@@ -316,12 +317,13 @@ function CashierTerminalContent() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  <label htmlFor="cashier-otp-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     Enter 6-Digit Gmail OTP:
                   </label>
                   <div className="relative">
-                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" aria-hidden="true" />
                     <input
+                      id="cashier-otp-input"
                       type="text"
                       maxLength={6}
                       value={otpInput}
@@ -336,12 +338,12 @@ function CashierTerminalContent() {
                   type="button"
                   onClick={handleVerifyOtp}
                   disabled={isVerifying || otpInput.length < 4}
-                  className="w-full bg-[#EA671B] hover:bg-[#D95B11] text-white font-black py-3 px-4 rounded-xl text-sm transition-all shadow-md flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+                  className="w-full min-h-[44px] bg-[#EA671B] hover:bg-[#D95B11] text-white font-black py-3 px-4 rounded-xl text-sm transition-all shadow-md flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
                 >
                   {isVerifying ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
                   ) : (
-                    <UserCheck className="w-4 h-4" />
+                    <UserCheck className="w-4 h-4" aria-hidden="true" />
                   )}
                   <span>Verify OTP &amp; Unlock Terminal</span>
                 </button>
@@ -487,12 +489,13 @@ function CashierTerminalContent() {
             {/* Giant Active Ticket Display */}
             <div className="my-6 text-center py-8 sm:py-10 bg-[#FFF8F1]/60 rounded-2xl border border-[#EA671B]/20 shadow-inner">
               <div className="flex items-center justify-center space-x-2 mb-1">
-                <span className="text-xs uppercase tracking-widest text-[#EA671B] font-black block">
+                <span className="text-xs uppercase tracking-widest text-[#B44606] font-black block">
                   CURRENT TICKET ASSIGNED
                 </span>
                 {currentTicket && isSeniorCitizenTicket(currentTicket) && (
-                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
-                    🧓 Senior Citizen
+                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-2xs inline-flex items-center space-x-1">
+                    <HeartHandshake className="w-3 h-3 text-white shrink-0" aria-hidden="true" />
+                    <span>Senior Citizen</span>
                   </span>
                 )}
               </div>
@@ -511,8 +514,8 @@ function CashierTerminalContent() {
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 mt-2">
-                  No ticket currently called. Tap &quot;Call Next Student&quot; or &quot;Call Senior 🧓&quot; to summon.
+                <p className="text-xs text-slate-500 mt-2 font-medium">
+                  No ticket currently called. Tap &quot;Call Next Student&quot; or &quot;Call Senior Citizen&quot; to summon.
                 </p>
               )}
             </div>
@@ -546,7 +549,7 @@ function CashierTerminalContent() {
               >
                 <div className="flex items-center space-x-1.5">
                   <HeartHandshake className="w-4 h-4 text-amber-100" />
-                  <span>Call Senior 🧓</span>
+                  <span>Call Senior (Priority)</span>
                 </div>
                 <span className="text-[10px] font-normal text-amber-100 mt-0.5 text-center leading-tight">
                   {waitingSeniorsCount > 0 
@@ -593,26 +596,26 @@ function CashierTerminalContent() {
                     type="button"
                     onClick={() => startServing(currentTicket.id)}
                     disabled={currentTicket.status === 'SERVING'}
-                    className="min-h-[42px] p-2 rounded-xl text-xs font-bold bg-[#FFF8F1] text-[#751A1A] border border-[#EA671B]/30 hover:bg-white transition-colors flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50"
+                    className="min-h-[44px] p-2 rounded-xl text-xs font-bold bg-[#FFF8F1] text-[#751A1A] border border-[#EA671B]/30 hover:bg-white transition-colors flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50"
                   >
-                    <Play className="w-3.5 h-3.5 text-[#EA671B]" />
+                    <Play className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
                     <span>Start Serving</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => completeServing(currentTicket.id)}
-                    className="min-h-[42px] p-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+                    className="min-h-[44px] p-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
                     title="Complete payment and leave window available"
                   >
-                    <Check className="w-3.5 h-3.5 text-slate-500" />
+                    <Check className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
                     <span>Finish (Standby)</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleSkipAndCallNext}
-                    className="min-h-[42px] p-2 rounded-xl text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+                    className="min-h-[44px] p-2 rounded-xl text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
                     title="Skip student and immediately call next"
                   >
                     <span>Skip &amp; Next</span>
@@ -621,10 +624,10 @@ function CashierTerminalContent() {
                   <button
                     type="button"
                     onClick={handleNoShowAndCallNext}
-                    className="min-h-[42px] p-2 rounded-xl text-xs font-semibold bg-red-50 text-red-800 border border-red-200 hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+                    className="min-h-[44px] p-2 rounded-xl text-xs font-semibold bg-red-50 text-red-800 border border-red-200 hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
                     title="Mark absent and immediately call next"
                   >
-                    <UserX className="w-3.5 h-3.5 text-red-600" />
+                    <UserX className="w-3.5 h-3.5 text-red-600" aria-hidden="true" />
                     <span>No-Show &amp; Next</span>
                   </button>
                 </div>
@@ -638,7 +641,7 @@ function CashierTerminalContent() {
           <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 gap-2">
               <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 text-[#EA671B]" />
+                <Users className="w-4 h-4 text-[#EA671B]" aria-hidden="true" />
                 <h3 className="text-sm font-black text-[#751A1A] uppercase tracking-wider">
                   Waiting Queue ({waitingTickets.length})
                 </h3>
@@ -649,21 +652,21 @@ function CashierTerminalContent() {
                 <button
                   type="button"
                   onClick={handleQuickAddTicket}
-                  className="bg-[#FFF8F1] hover:bg-white text-[#751A1A] border border-[#EA671B]/30 hover:border-[#EA671B] text-[11px] sm:text-xs font-bold px-2 py-1 rounded-xl transition-all flex items-center space-x-1 cursor-pointer shadow-2xs"
+                  className="min-h-[44px] bg-[#FFF8F1] hover:bg-white text-[#751A1A] border border-[#EA671B]/30 hover:border-[#EA671B] text-[11px] sm:text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all flex items-center space-x-1 cursor-pointer shadow-2xs"
                   title="Add next regular ticket (C-xxx) to queue"
                 >
-                  <PlusCircle className="w-3.5 h-3.5 text-[#EA671B]" />
+                  <PlusCircle className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
                   <span>+ Regular (C)</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleQuickAddSeniorTicket}
-                  className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-[11px] sm:text-xs font-bold px-2 py-1 rounded-xl transition-all flex items-center space-x-1 cursor-pointer shadow-2xs"
+                  className="min-h-[44px] bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-[11px] sm:text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all flex items-center space-x-1 cursor-pointer shadow-2xs"
                   title="Add next Senior Citizen ticket (S-xxx) to priority queue"
                 >
-                  <HeartHandshake className="w-3.5 h-3.5 text-amber-700" />
-                  <span>+ Senior 🧓 (S)</span>
+                  <HeartHandshake className="w-3.5 h-3.5 text-amber-700" aria-hidden="true" />
+                  <span>+ Senior (S)</span>
                 </button>
               </div>
             </div>
@@ -680,14 +683,14 @@ function CashierTerminalContent() {
                     <button
                       type="button"
                       onClick={handleQuickAddTicket}
-                      className="text-[#EA671B] font-bold text-xs underline cursor-pointer"
+                      className="text-[#B44606] hover:text-[#751A1A] font-bold text-xs underline cursor-pointer"
                     >
                       + Regular Ticket (C)
                     </button>
                     <button
                       type="button"
                       onClick={handleQuickAddSeniorTicket}
-                      className="text-amber-700 font-bold text-xs underline cursor-pointer"
+                      className="text-amber-800 hover:text-amber-950 font-bold text-xs underline cursor-pointer"
                     >
                       + Senior Citizen (S)
                     </button>
@@ -717,8 +720,9 @@ function CashierTerminalContent() {
                               {t.ticketNumber}
                             </span>
                             {isSenior && (
-                              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-full uppercase">
-                                🧓 Priority
+                              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-full uppercase inline-flex items-center space-x-0.5">
+                                <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
+                                <span>Priority</span>
                               </span>
                             )}
                           </div>

@@ -26,7 +26,8 @@ import {
   Clock,
   Radio,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  HeartHandshake
 } from 'lucide-react';
 
 export default function StudentLiveTVMonitor() {
@@ -204,7 +205,7 @@ export default function StudentLiveTVMonitor() {
         <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 w-full md:w-auto">
           <SACLogo className="w-12 h-12 xs:w-14 xs:h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 drop-shadow-sm shrink-0" />
           <div className="min-w-0 flex-1">
-            <span className="text-[10px] sm:text-xs md:text-sm font-extrabold text-[#EA671B] uppercase tracking-wider sm:tracking-widest block truncate">
+            <span className="text-[10px] sm:text-xs md:text-sm font-extrabold text-[#B44606] uppercase tracking-wider sm:tracking-widest block truncate">
               ST. ANTHONY&apos;S COLLEGE &bull; SAN JOSE, ANTIQUE
             </span>
             <h1 className="text-xl xs:text-2xl sm:text-3xl lg:text-4xl font-black text-[#751A1A] tracking-tight leading-tight mt-0.5 truncate">
@@ -230,15 +231,16 @@ export default function StudentLiveTVMonitor() {
               <button
                 type="button"
                 onClick={handleEnableNotifications}
-                className="bg-white hover:bg-slate-50 text-[#751A1A] border border-[#EA671B]/40 hover:border-[#EA671B] text-[11px] sm:text-xs font-bold px-2.5 sm:px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs flex items-center space-x-1.5"
+                className="min-h-[44px] bg-white hover:bg-slate-50 text-[#751A1A] border border-[#EA671B]/40 hover:border-[#EA671B] text-xs font-bold px-3 py-2 rounded-xl transition-all cursor-pointer shadow-2xs flex items-center space-x-1.5"
                 title="Get alerted when your number is in now"
+                aria-label="Enable browser push notifications"
               >
-                <BellRing className="w-3.5 h-3.5 text-[#EA671B] animate-bounce" />
+                <BellRing className="w-4 h-4 text-[#EA671B] animate-bounce" aria-hidden="true" />
                 <span className="hidden xs:inline">Enable Alerts</span>
               </button>
             ) : (
               <div 
-                className="bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-xl flex items-center space-x-1"
+                className="min-h-[44px] bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5"
                 title="Browser Notifications Active: You will be alerted when a ticket is called."
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -248,6 +250,7 @@ export default function StudentLiveTVMonitor() {
 
             {/* Audio Voice Announcements Toggle */}
             <button
+              type="button"
               onClick={() => {
                 const nextState = !audioEnabled;
                 setAudioEnabled(nextState);
@@ -255,35 +258,41 @@ export default function StudentLiveTVMonitor() {
                   playQueueChime();
                 }
               }}
-              className={`min-w-[38px] min-h-[38px] sm:min-w-[42px] sm:min-h-[42px] p-2 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
+              className={`min-w-[44px] min-h-[44px] p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
                 audioEnabled 
                   ? 'bg-[#EA671B] text-white shadow-xs font-bold' 
                   : 'text-slate-500 hover:text-[#751A1A] hover:bg-white border border-transparent hover:border-slate-200'
               }`}
               title={audioEnabled ? "Voice Announcements On (Click to Mute)" : "Voice Announcements Muted (Click to Unmute)"}
-              aria-label="Toggle Voice Announcements"
+              aria-label={audioEnabled ? "Voice Announcements On (Click to Mute)" : "Voice Announcements Muted (Click to Unmute)"}
+              aria-pressed={audioEnabled}
             >
-              {audioEnabled ? <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" />}
+              {audioEnabled ? <Volume2 className="w-5 h-5" aria-hidden="true" /> : <VolumeX className="w-5 h-5" aria-hidden="true" />}
             </button>
 
             {/* Fullscreen Button */}
             <button
+              type="button"
               onClick={toggleFullscreen}
-              className="min-w-[38px] min-h-[38px] sm:min-w-[42px] sm:min-h-[42px] p-2 text-slate-500 hover:text-[#751A1A] hover:bg-white rounded-xl transition-colors cursor-pointer flex items-center justify-center border border-transparent hover:border-slate-200"
+              className="min-w-[44px] min-h-[44px] p-2.5 text-slate-500 hover:text-[#751A1A] hover:bg-white rounded-xl transition-colors cursor-pointer flex items-center justify-center border border-transparent hover:border-slate-200"
               title="Toggle Fullscreen"
-              aria-label="Toggle Fullscreen"
+              aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              aria-pressed={isFullscreen}
             >
-              {isFullscreen ? <Minimize2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5" />}
+              {isFullscreen ? <Minimize2 className="w-5 h-5" aria-hidden="true" /> : <Maximize2 className="w-5 h-5" aria-hidden="true" />}
             </button>
           </div>
         </div>
       </header>
 
       {/* "WHAT NUMBER IS IN NOW" PERSISTENT NOTIFICATION STATUS BAR */}
-      <section className="bg-gradient-to-r from-[#FFF8F1] via-white to-[#FFF8F1] border-2 border-[#EA671B]/35 rounded-2xl sm:rounded-3xl p-3 sm:p-4 my-3 sm:my-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      <section 
+        aria-label="Live calling queue status"
+        className="bg-gradient-to-r from-[#FFF8F1] via-white to-[#FFF8F1] border-2 border-[#EA671B]/35 rounded-2xl sm:rounded-3xl p-3 sm:p-4 my-3 sm:my-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
+      >
         <div className="flex items-center space-x-2.5 min-w-0">
           <div className="w-8 h-8 rounded-xl bg-[#751A1A] text-white flex items-center justify-center shadow-xs shrink-0">
-            <Radio className="w-4 h-4 text-[#EA671B] animate-pulse" />
+            <Radio className="w-4 h-4 text-[#EA671B] animate-pulse" aria-hidden="true" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
@@ -302,7 +311,11 @@ export default function StudentLiveTVMonitor() {
         </div>
 
         {/* Live Active Number Badges */}
-        <div className="flex items-center space-x-2 sm:space-x-3 w-full md:w-auto justify-between md:justify-end flex-wrap gap-2">
+        <div 
+          aria-live="polite" 
+          aria-atomic="true"
+          className="flex items-center space-x-2 sm:space-x-3 w-full md:w-auto justify-between md:justify-end flex-wrap gap-2"
+        >
           {/* Window 1 Badge */}
           <div className="bg-white border-2 border-[#EA671B]/30 rounded-xl px-3 py-1.5 shadow-2xs flex items-center space-x-2 flex-1 md:flex-initial">
             <span className="text-[10px] font-extrabold text-[#751A1A] uppercase tracking-wider block">W-1:</span>
@@ -310,8 +323,9 @@ export default function StudentLiveTVMonitor() {
               {servingC1 ? servingC1.ticketNumber : 'STANDBY'}
             </span>
             {servingC1 && isSeniorCitizenTicket(servingC1) && (
-              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-md uppercase">
-                🧓 SENIOR
+              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-md uppercase inline-flex items-center space-x-0.5">
+                <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
+                <span>SENIOR</span>
               </span>
             )}
             {servingC1 && (
@@ -326,8 +340,9 @@ export default function StudentLiveTVMonitor() {
               {servingC2 ? servingC2.ticketNumber : 'STANDBY'}
             </span>
             {servingC2 && isSeniorCitizenTicket(servingC2) && (
-              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-md uppercase">
-                🧓 SENIOR
+              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-md uppercase inline-flex items-center space-x-0.5">
+                <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
+                <span>SENIOR</span>
               </span>
             )}
             {servingC2 && (
@@ -338,7 +353,7 @@ export default function StudentLiveTVMonitor() {
           {/* Last Call Pill */}
           {latestCallNotification && (
             <div className="hidden lg:flex items-center space-x-1.5 bg-[#751A1A] text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-2xs">
-              <Bell className="w-3.5 h-3.5 text-[#EA671B]" />
+              <Bell className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
               <span>Latest Call: <strong>{latestCallNotification.ticketNumber}</strong> (W-{latestCallNotification.windowNumber})</span>
             </div>
           )}
@@ -371,12 +386,13 @@ export default function StudentLiveTVMonitor() {
 
             <div className="my-auto py-5 sm:py-8">
               <div className="flex items-center justify-center space-x-2 mb-1 sm:mb-2">
-                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#EA671B] font-black block">
+                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#B44606] font-black block">
                   NOW SERVING NUMBER
                 </span>
                 {servingC1 && isSeniorCitizenTicket(servingC1) && (
-                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
-                    🧓 Priority Lane
+                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs inline-flex items-center space-x-1">
+                    <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
+                    <span>Priority Lane</span>
                   </span>
                 )}
               </div>
@@ -388,7 +404,7 @@ export default function StudentLiveTVMonitor() {
                 <span className="text-xs sm:text-sm font-bold text-[#751A1A] block truncate">
                   {servingC1 ? servingC1.studentName : 'Window Ready'}
                 </span>
-                <span className="text-[11px] sm:text-xs text-[#EA671B] font-mono font-semibold block mt-0.5">
+                <span className="text-[11px] sm:text-xs text-[#B44606] font-mono font-semibold block mt-0.5">
                   {servingC1 
                     ? `Called: ${formatTimeAgo(servingC1.calledAt)}` 
                     : 'Awaiting next queue number call'}
@@ -398,7 +414,7 @@ export default function StudentLiveTVMonitor() {
 
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs text-slate-600 font-semibold px-1">
               <div className="flex items-center space-x-1.5">
-                <Receipt className="w-4 h-4 text-[#EA671B]" />
+                <Receipt className="w-4 h-4 text-[#EA671B]" aria-hidden="true" />
                 <span>Cashier Officer #1</span>
               </div>
               {servingC1 && (
@@ -411,10 +427,11 @@ export default function StudentLiveTVMonitor() {
                     studentName: servingC1.studentName,
                     calledAt: servingC1.calledAt || '',
                   })}
-                  className="text-[#751A1A] hover:text-[#EA671B] flex items-center space-x-1 font-bold cursor-pointer"
+                  className="min-h-[44px] px-2 py-1 text-[#751A1A] hover:text-[#B44606] flex items-center space-x-1 font-bold cursor-pointer"
                   title="Replay Voice Chime for Window 1"
+                  aria-label="Replay Voice Chime for Window 1"
                 >
-                  <Volume2 className="w-3.5 h-3.5 text-[#EA671B]" />
+                  <Volume2 className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
                   <span>Chime</span>
                 </button>
               )}
@@ -443,12 +460,13 @@ export default function StudentLiveTVMonitor() {
 
             <div className="my-auto py-5 sm:py-8">
               <div className="flex items-center justify-center space-x-2 mb-1 sm:mb-2">
-                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#EA671B] font-black block">
+                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#B44606] font-black block">
                   NOW SERVING NUMBER
                 </span>
                 {servingC2 && isSeniorCitizenTicket(servingC2) && (
-                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
-                    🧓 Priority Lane
+                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs inline-flex items-center space-x-1">
+                    <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
+                    <span>Priority Lane</span>
                   </span>
                 )}
               </div>
@@ -460,7 +478,7 @@ export default function StudentLiveTVMonitor() {
                 <span className="text-xs sm:text-sm font-bold text-[#751A1A] block truncate">
                   {servingC2 ? servingC2.studentName : 'Window Ready'}
                 </span>
-                <span className="text-[11px] sm:text-xs text-[#EA671B] font-mono font-semibold block mt-0.5">
+                <span className="text-[11px] sm:text-xs text-[#B44606] font-mono font-semibold block mt-0.5">
                   {servingC2 
                     ? `Called: ${formatTimeAgo(servingC2.calledAt)}` 
                     : 'Awaiting next queue number call'}
@@ -470,7 +488,7 @@ export default function StudentLiveTVMonitor() {
 
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs text-slate-600 font-semibold px-1">
               <div className="flex items-center space-x-1.5">
-                <Receipt className="w-4 h-4 text-[#EA671B]" />
+                <Receipt className="w-4 h-4 text-[#EA671B]" aria-hidden="true" />
                 <span>Cashier Officer #2</span>
               </div>
               {servingC2 && (
@@ -483,10 +501,11 @@ export default function StudentLiveTVMonitor() {
                     studentName: servingC2.studentName,
                     calledAt: servingC2.calledAt || '',
                   })}
-                  className="text-[#751A1A] hover:text-[#EA671B] flex items-center space-x-1 font-bold cursor-pointer"
+                  className="min-h-[44px] px-2 py-1 text-[#751A1A] hover:text-[#B44606] flex items-center space-x-1 font-bold cursor-pointer"
                   title="Replay Voice Chime for Window 2"
+                  aria-label="Replay Voice Chime for Window 2"
                 >
-                  <Volume2 className="w-3.5 h-3.5 text-[#EA671B]" />
+                  <Volume2 className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
                   <span>Chime</span>
                 </button>
               )}
@@ -503,31 +522,31 @@ export default function StudentLiveTVMonitor() {
                 <button
                   type="button"
                   onClick={() => setActiveRosterTab('waiting')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                  className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
                     activeRosterTab === 'waiting'
                       ? 'bg-white text-[#751A1A] shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Layers className="w-3.5 h-3.5 text-[#EA671B]" />
+                  <Layers className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
                   <span>Up Next ({upNextTickets.length})</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setActiveRosterTab('recent')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                  className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
                     activeRosterTab === 'recent'
                       ? 'bg-white text-[#751A1A] shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <History className="w-3.5 h-3.5 text-[#EA671B]" />
+                  <History className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
                   <span>Called Log ({recentlyCalledTickets.length})</span>
                 </button>
               </div>
 
-              <span className="text-[11px] font-bold text-[#EA671B] hidden sm:inline">
+              <span className="text-xs font-bold text-[#B44606] hidden sm:inline">
                 Live Feed
               </span>
             </div>
@@ -569,8 +588,9 @@ export default function StudentLiveTVMonitor() {
                                   {tkt.ticketNumber}
                                 </span>
                                 {isSenior && (
-                                  <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-full uppercase">
-                                    🧓 Priority
+                                  <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-full uppercase inline-flex items-center space-x-0.5">
+                                    <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
+                                    <span>Priority</span>
                                   </span>
                                 )}
                               </div>
@@ -583,7 +603,7 @@ export default function StudentLiveTVMonitor() {
                           <span className={`text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg border shrink-0 ${
                             isSenior
                               ? 'bg-[#751A1A] text-white border-[#751A1A]'
-                              : 'text-[#EA671B] bg-[#FFF8F1] border-[#EA671B]/30'
+                              : 'text-[#B44606] bg-[#FFF8F1] border-[#EA671B]/30'
                           }`}>
                             {isSenior ? 'Priority' : 'Standby'}
                           </span>
@@ -630,8 +650,9 @@ export default function StudentLiveTVMonitor() {
                                   Window {tkt.assignedCounterNumber || 1}
                                 </span>
                                 {isSenior && (
-                                  <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded uppercase">
-                                    🧓 Senior
+                                  <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded uppercase inline-flex items-center space-x-0.5">
+                                    <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
+                                    <span>Senior</span>
                                   </span>
                                 )}
                               </div>

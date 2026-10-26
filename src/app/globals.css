@@ -4,7 +4,8 @@
   :root {
     /* St. Anthony's College Official Identity Colors (from Logo) */
     --sac-amber: #EA671B; /* Golden Amber / Warm Terracotta from seal */
-    --sac-maroon: #751A1A; /* Deep Crimson Maroon from lettering & cross */
+    --sac-amber-text: #B44606; /* WCAG AA 5.5:1 Accessible Text Amber on white */
+    --sac-maroon: #751A1A; /* Deep Crimson Maroon (10.9:1 contrast on white) */
     --sac-dark-maroon: #5A1212;
     --sac-cream: #FFF8F1;
     --sac-amber-light: #FFEDD5;
@@ -20,6 +21,24 @@
     --secondary-foreground: #FFFFFF;
     --border: #F1F5F9;
     --radius: 1rem;
+  }
+
+  /* Accessible keyboard navigation focus ring */
+  *:focus-visible {
+    outline: 2px solid #EA671B !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* Reduced motion support for accessibility (WCAG 2.3.3) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

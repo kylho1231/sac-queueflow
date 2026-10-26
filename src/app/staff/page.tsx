@@ -17,7 +17,7 @@ export default function StaffRedirectPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col justify-center items-center p-6 text-center font-sans">
       <SACLogo className="w-20 h-20 mb-4 drop-shadow-sm" />
-      <span className="text-xs font-bold text-[#EA671B] uppercase tracking-widest block mb-1">
+      <span className="text-xs font-bold text-[#B44606] uppercase tracking-widest block mb-1">
         ST. ANTHONY&apos;S COLLEGE &bull; SAN JOSE, ANTIQUE
       </span>
       <h1 className="text-2xl font-black text-[#751A1A] mb-2">Staff Portal has transitioned to Cashier Terminal</h1>
@@ -26,10 +26,10 @@ export default function StaffRedirectPage() {
       </p>
       <Link
         href="/cashier"
-        className="bg-[#EA671B] hover:bg-[#D95B11] text-white font-black px-6 py-3 rounded-2xl text-sm transition-all shadow-md inline-flex items-center space-x-2 cursor-pointer"
+        className="min-h-[44px] bg-[#EA671B] hover:bg-[#D95B11] text-white font-black px-6 py-3 rounded-2xl text-sm transition-all shadow-md inline-flex items-center space-x-2 cursor-pointer"
       >
         <span>Proceed to Cashier Terminal</span>
-        <ArrowRight className="w-4 h-4" />
+        <ArrowRight className="w-4 h-4" aria-hidden="true" />
       </Link>
     </div>
   );

@@ -16,7 +16,8 @@ import {
   Sparkles, 
   Calendar, 
   Building, 
-  Info 
+  Info,
+  Lightbulb 
 } from 'lucide-react';
 import QRCode from 'qrcode';
 
@@ -476,10 +477,11 @@ export function StudentDashboard() {
 
             <form onSubmit={handleJoinSubmit} className="mt-4 space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                <label htmlFor="join-office-select" className="text-xs font-semibold text-slate-700 block mb-1">
                   Target Campus Office
                 </label>
                 <select
+                  id="join-office-select"
                   value={selectedOfficeId}
                   onChange={e => {
                     setSelectedOfficeId(e.target.value);
@@ -494,10 +496,11 @@ export function StudentDashboard() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                <label htmlFor="join-service-select" className="text-xs font-semibold text-slate-700 block mb-1">
                   Specific Transaction / Service
                 </label>
                 <select
+                  id="join-service-select"
                   value={selectedServiceId}
                   onChange={e => setSelectedServiceId(e.target.value)}
                   required
@@ -511,7 +514,10 @@ export function StudentDashboard() {
               </div>
 
               <div className="bg-teal-50 rounded-xl p-3 border border-teal-200 text-xs text-teal-900 space-y-1">
-                <p className="font-semibold">💡 Student Tip:</p>
+                <p className="font-semibold flex items-center space-x-1.5">
+                  <Lightbulb className="w-3.5 h-3.5 text-teal-700 shrink-0" aria-hidden="true" />
+                  <span>Student Tip:</span>
+                </p>
                 <p className="text-[11px] leading-relaxed text-teal-800">
                   You can safely attend your classes while waiting. SAC QueueFlow will notify you before your turn.
                 </p>
@@ -521,13 +527,13 @@ export function StudentDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowJoinModal(false)}
-                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-xl cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
+                  className="min-h-[44px] bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
                 >
                   Confirm & Generate Pass
                 </button>
@@ -593,10 +599,11 @@ export function StudentDashboard() {
 
             <div className="mt-4 space-y-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                <label htmlFor="defer-reason-select" className="text-xs font-semibold text-slate-700 block mb-1">
                   Reason for deferment:
                 </label>
                 <select
+                  id="defer-reason-select"
                   value={deferReason}
                   onChange={e => setDeferReason(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 outline-hidden"

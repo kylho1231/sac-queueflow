@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQueue } from '@/context/QueueContext';
-import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
+import { Volume2, VolumeX, Maximize2, Minimize2, Megaphone } from 'lucide-react';
 
 export function TVQueueDisplay() {
   const { offices, tickets, counters, announcements } = useQueue();
@@ -79,7 +79,8 @@ export function TVQueueDisplay() {
             <select
               value={selectedOfficeId}
               onChange={e => setSelectedOfficeId(e.target.value)}
-              className="bg-transparent text-xs sm:text-sm font-bold text-teal-300 px-3 py-1 outline-hidden cursor-pointer"
+              aria-label="Select office queue to display"
+              className="bg-transparent text-xs sm:text-sm font-bold text-teal-300 px-3 py-1 outline-hidden cursor-pointer min-h-[44px]"
             >
               {offices.map(o => (
                 <option key={o.id} value={o.id} className="bg-slate-900 text-white">
@@ -89,26 +90,32 @@ export function TVQueueDisplay() {
             </select>
 
             <button
+              type="button"
               onClick={() => {
                 setAudioEnabled(!audioEnabled);
                 if (!audioEnabled && primaryServing) {
                   speakAnnouncement(`Queue number ${primaryServing.ticketNumber}, please proceed to counter ${primaryServing.assignedCounterNumber || 1}`);
                 }
               }}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
+              className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl transition-colors cursor-pointer ${
                 audioEnabled ? 'bg-teal-500/20 text-teal-400' : 'text-slate-500 hover:text-white'
               }`}
               title="Toggle Audio Voice Announcements"
+              aria-label={audioEnabled ? "Disable audio voice announcements" : "Enable audio voice announcements"}
+              aria-pressed={audioEnabled}
             >
-              {audioEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              {audioEnabled ? <Volume2 className="w-5 h-5" aria-hidden="true" /> : <VolumeX className="w-5 h-5" aria-hidden="true" />}
             </button>
 
             <button
+              type="button"
               onClick={toggleFullscreen}
-              className="p-2 text-slate-400 hover:text-white rounded-xl transition-colors cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-slate-400 hover:text-white rounded-xl transition-colors cursor-pointer"
               title="Toggle Fullscreen"
+              aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              aria-pressed={isFullscreen}
             >
-              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              {isFullscreen ? <Minimize2 className="w-5 h-5" aria-hidden="true" /> : <Maximize2 className="w-5 h-5" aria-hidden="true" />}
             </button>
           </div>
         </div>
@@ -200,7 +207,10 @@ export function TVQueueDisplay() {
           </div>
 
           <div className="mt-6 p-4 rounded-2xl bg-teal-950/40 border border-teal-800/40 text-xs text-teal-200/80 leading-relaxed">
-            <strong className="text-teal-300 block mb-1">📢 Antonian Reminder:</strong>
+            <strong className="text-teal-300 mb-1 flex items-center space-x-1.5">
+              <Megaphone className="w-4 h-4 text-teal-300 shrink-0" aria-hidden="true" />
+              <span>Antonian Reminder:</span>
+            </strong>
             Students attending lecture classes may use the SAC QueueFlow mobile app to track queue progress or request class deferment.
           </div>
         </div>

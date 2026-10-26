@@ -74,6 +74,7 @@ export function AdminAnalytics() {
             <select
               value={selectedOfficeFilter}
               onChange={e => setSelectedOfficeFilter(e.target.value)}
+              aria-label="Filter by campus office"
               className="bg-transparent font-medium text-slate-800 outline-hidden cursor-pointer"
             >
               <option value="all">All Campus Offices</option>

@@ -154,8 +154,8 @@ export function sendBrowserNotification(
     const title = payload.ticketNumber === 'SYSTEM' 
       ? 'SAC Cashier Notifications Active' 
       : isSenior
-        ? `🧓 SENIOR CITIZEN: Ticket ${payload.ticketNumber}`
-        : `🔔 NOW IN: Ticket ${payload.ticketNumber}`;
+        ? `SENIOR CITIZEN: Ticket ${payload.ticketNumber}`
+        : `NOW IN: Ticket ${payload.ticketNumber}`;
 
     const body = customBody || 
       (isSenior
@@ -177,7 +177,7 @@ export function sendBrowserNotification(
         reg.showNotification(
           payload.ticketNumber === 'SYSTEM' 
             ? 'SAC Cashier Notifications Active' 
-            : `🔔 NOW IN: Ticket ${payload.ticketNumber}`,
+            : `NOW IN: Ticket ${payload.ticketNumber}`,
           {
             body: customBody || `Please proceed to Cashier Window ${payload.windowNumber}.`,
             icon: '/sac-logo.png',

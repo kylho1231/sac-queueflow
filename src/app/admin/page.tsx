@@ -29,7 +29,7 @@ function AdminProtectedContent() {
           <div className="flex justify-center mb-3">
             <SACLogo className="w-20 h-20 drop-shadow-sm" />
           </div>
-          <span className="text-[10px] font-extrabold text-[#EA671B] uppercase tracking-widest block bg-[#FFF8F1] py-1 px-3 rounded-full border border-[#EA671B]/30 inline-block mb-1">
+          <span className="text-[10px] font-extrabold text-[#B44606] uppercase tracking-widest block bg-[#FFF8F1] py-1 px-3 rounded-full border border-[#EA671B]/30 inline-block mb-1">
             ST. ANTHONY&apos;S COLLEGE &bull; ANTIQUE
           </span>
           <h1 className="text-xl sm:text-2xl font-black text-[#751A1A] mt-1">
@@ -41,12 +41,13 @@ function AdminProtectedContent() {
 
           <form onSubmit={handleAuth} className="mt-6 space-y-4 text-left">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              <label htmlFor="admin-passkey-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                 Admin Passkey:
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" aria-hidden="true" />
                 <input
+                  id="admin-passkey-input"
                   type="password"
                   placeholder="Enter administrative passkey"
                   value={passkey}
@@ -65,20 +66,20 @@ function AdminProtectedContent() {
 
             <button
               type="submit"
-              className="w-full bg-[#751A1A] hover:bg-[#5A1212] text-white font-black py-3 rounded-xl text-xs transition-all shadow-md flex items-center justify-center space-x-2 cursor-pointer"
+              className="w-full min-h-[44px] bg-[#751A1A] hover:bg-[#5A1212] text-white font-black py-3 rounded-xl text-xs transition-all shadow-md flex items-center justify-center space-x-2 cursor-pointer"
             >
-              <ShieldCheck className="w-4 h-4 text-[#EA671B]" />
+              <ShieldCheck className="w-4 h-4 text-[#EA671B]" aria-hidden="true" />
               <span>Unlock Admin Dashboard</span>
             </button>
           </form>
 
           <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-            <Link href="/" className="hover:text-[#751A1A] flex items-center space-x-1 font-semibold">
-              <ArrowLeft className="w-3.5 h-3.5" />
+            <Link href="/" className="min-h-[44px] inline-flex items-center hover:text-[#751A1A] space-x-1 font-semibold">
+              <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Student Live Monitor</span>
             </Link>
-            <Link href="/cashier" className="text-[#EA671B] hover:underline font-bold">
-              Cashier Terminal &rarr;
+            <Link href="/cashier" className="min-h-[44px] inline-flex items-center text-[#B44606] hover:text-[#751A1A] hover:underline font-bold">
+              <span>Cashier Terminal &rarr;</span>
             </Link>
           </div>
         </div>
@@ -93,7 +94,7 @@ function AdminProtectedContent() {
           <SACLogo className="w-11 h-11" />
           <div>
             <span className="font-black text-[#751A1A] text-sm tracking-tight block">ST. ANTHONY&apos;S COLLEGE</span>
-            <span className="text-xs text-[#EA671B] font-bold">Institutional Governance &amp; Queue Analytics</span>
+            <span className="text-xs text-[#B44606] font-bold">Institutional Governance &amp; Queue Analytics</span>
           </div>
         </div>
 

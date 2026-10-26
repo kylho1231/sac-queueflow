@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { ActiveCallNotification } from '@/context/CashierQueueContext';
-import { BellRing, Volume2, X, ArrowRight, User } from 'lucide-react';
+import { BellRing, Volume2, X, ArrowRight, User, HeartHandshake } from 'lucide-react';
 
 interface CallNotificationAlertProps {
   notification: ActiveCallNotification | null;
@@ -62,20 +62,24 @@ export function CallNotificationAlert({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EA671B] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-[#EA671B]"></span>
             </span>
-            <BellRing className="w-4 h-4 text-[#EA671B] animate-bounce" />
+            {isSenior ? (
+              <HeartHandshake className="w-4 h-4 text-amber-200 animate-pulse" aria-hidden="true" />
+            ) : (
+              <BellRing className="w-4 h-4 text-[#EA671B] animate-bounce" aria-hidden="true" />
+            )}
             <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-[#FFF8F1]">
               {isSenior
-                ? (notification.isRecall ? '🧓 ATTENTION: SENIOR CITIZEN RECALLED' : '🧓 SENIOR CITIZEN PRIORITY CALL')
+                ? (notification.isRecall ? 'ATTENTION: SENIOR CITIZEN RECALLED' : 'SENIOR CITIZEN PRIORITY CALL')
                 : (notification.isRecall ? 'ATTENTION: TICKET RECALLED' : 'NOW CALLING NUMBER IN QUEUE')}
             </span>
           </div>
 
           <button
             onClick={onDismiss}
-            className="p-1 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-colors cursor-pointer"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-white/90 hover:text-white hover:bg-white/20 transition-colors cursor-pointer"
             aria-label="Dismiss call notification"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -84,12 +88,13 @@ export function CallNotificationAlert({
           {/* Giant Number Callout */}
           <div className="text-center sm:text-left flex-1 min-w-0">
             <div className="flex items-center space-x-2 justify-center sm:justify-start">
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#EA671B] block">
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#B44606] block">
                 ASSIGNED NUMBER IS NOW IN:
               </span>
               {isSenior && (
-                <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Priority Lane
+                <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider inline-flex items-center space-x-1">
+                  <HeartHandshake className="w-3 h-3 text-white shrink-0" aria-hidden="true" />
+                  <span>Priority Lane</span>
                 </span>
               )}
             </div>
@@ -98,7 +103,7 @@ export function CallNotificationAlert({
             </div>
             {notification.studentName && (
               <p className="text-xs sm:text-sm font-bold text-slate-700 flex items-center justify-center sm:justify-start space-x-1.5 mt-1 truncate">
-                <User className="w-3.5 h-3.5 text-[#EA671B] shrink-0" />
+                <User className="w-3.5 h-3.5 text-[#EA671B] shrink-0" aria-hidden="true" />
                 <span className="truncate">{notification.studentName}</span>
               </p>
             )}
@@ -112,7 +117,7 @@ export function CallNotificationAlert({
               </span>
               <span className="text-lg sm:text-xl font-black tracking-tight flex items-center justify-center space-x-1.5 text-white">
                 <span>CASHIER WINDOW {notification.windowNumber}</span>
-                <ArrowRight className="w-4 h-4 text-[#EA671B]" />
+                <ArrowRight className="w-4 h-4 text-[#EA671B]" aria-hidden="true" />
               </span>
             </div>
 
@@ -121,10 +126,11 @@ export function CallNotificationAlert({
               <button
                 type="button"
                 onClick={() => onReplayAudio(notification)}
-                className="inline-flex items-center space-x-1.5 text-[11px] font-bold text-[#751A1A] hover:text-[#EA671B] bg-white border border-slate-200 hover:border-[#EA671B]/50 px-3 py-1 rounded-xl shadow-2xs transition-all cursor-pointer"
-                title="Replay Voice Callout & Chime"
+                className="min-h-[44px] px-3.5 py-2 inline-flex items-center space-x-1.5 text-xs font-bold text-[#751A1A] hover:text-[#B44606] bg-white border border-slate-200 hover:border-[#EA671B]/50 rounded-xl shadow-2xs transition-all cursor-pointer"
+                title="Replay Voice Callout &amp; Chime"
+                aria-label="Replay Voice Callout &amp; Chime"
               >
-                <Volume2 className="w-3.5 h-3.5 text-[#EA671B]" />
+                <Volume2 className="w-4 h-4 text-[#EA671B]" aria-hidden="true" />
                 <span>Replay Voice Chime</span>
               </button>
             )}

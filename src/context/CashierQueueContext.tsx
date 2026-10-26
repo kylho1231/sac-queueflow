@@ -452,7 +452,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => {});
 
     showToast(
-      isSenior ? '🧓 Priority Lane Called' : 'Now Calling',
+      isSenior ? 'Priority Lane Called' : 'Now Calling',
       `Ticket ${nextTicket.ticketNumber}${isSenior ? ' (Senior Citizen)' : ''} called to Cashier Window ${counterNumber}!`, 
       'success'
     );
@@ -747,7 +747,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     const formattedNum = getNextSeqTicketNumber(tickets, prefix);
 
     const noteDetails = [
-      isSeniorCitizen ? '🧓 Priority Lane (Senior Citizen)' : '',
+      isSeniorCitizen ? 'Priority Lane (Senior Citizen)' : '',
       transactionLabel ? `Type: ${transactionLabel}` : '',
       yearCourse ? `Course/Yr: ${yearCourse}` : '',
       amount ? `Amount: ₱${amount}` : '',
@@ -793,7 +793,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => {});
 
     showToast(
-      isSeniorCitizen ? '🧓 Senior Citizen Slip' : 'Printed Slip Generated',
+      isSeniorCitizen ? 'Senior Citizen Slip' : 'Printed Slip Generated',
       `Queue Number: ${newTicket.ticketNumber}${isSeniorCitizen ? ' (Priority Lane)' : ''}. Please monitor the campus TV display.`,
       'success'
     );
