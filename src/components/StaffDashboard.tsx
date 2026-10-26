@@ -43,9 +43,10 @@ export function StaffDashboard() {
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [verificationCodeInput, setVerificationCodeInput] = useState<string>('');
 
-  const [currentTimeMs, setCurrentTimeMs] = useState<number>(() => Date.now());
+  const [currentTimeMs, setCurrentTimeMs] = useState<number>(0);
 
   useEffect(() => {
+    setCurrentTimeMs(Date.now());
     const interval = setInterval(() => setCurrentTimeMs(Date.now()), 30000);
     return () => clearInterval(interval);
   }, []);

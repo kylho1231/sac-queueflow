@@ -1,31 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useQueue } from '@/context/QueueContext';
-import { UserRole } from '@/types/queue';
 import { 
   Building2, 
   GraduationCap, 
-  UserCheck, 
-  ShieldCheck, 
-  Bell
+  Bell 
 } from 'lucide-react';
 
 export function NavigationHeader() {
-  const { 
-    currentRole, 
-    setCurrentRole, 
-    notifications, 
-    markNotificationRead, 
-    clearNotifications 
-  } = useQueue();
-
-  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const { notifications, markNotificationRead, clearNotifications } = useQueue();
+  const [showNotifDropdown, setShowNotifDropdown] = React.useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
+  const pathname = usePathname();
 
-  const handleRoleChange = (role: UserRole) => {
-    setCurrentRole(role);
-  };
+  // Detect which portal is currently active
+  const isStudentPortal = pathname === '/';
+  const isStaffPortal = pathname?.startsWith('/staff');
+  const isAdminPortal = pathname?.startsWith('/admin');
+  const isDisplayPortal = pathname?.startsWith('/display');
 
   const requestBrowserPermission = async () => {
     if ('Notification' in window) {
@@ -44,76 +39,42 @@ export function NavigationHeader() {
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-teal-100/90 shadow-sm transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo & Branding */}
-          <div className="flex items-center space-x-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-teal-800 via-teal-700 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-teal-900/10 ring-2 ring-teal-200/50">
+          {/* Logo & Branding linking back to student home */}
+          <Link href="/" className="flex items-center space-x-3.5 group cursor-pointer">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-teal-800 via-teal-700 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-teal-900/10 ring-2 ring-teal-200/50 group-hover:scale-105 transition-transform">
               <Building2 className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-extrabold text-xl text-teal-950 tracking-tight">SAC QueueFlow</span>
                 <span className="bg-gradient-to-r from-teal-100 to-emerald-100 text-teal-900 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-teal-300/60 shadow-2xs">
-                  SAC Antique
+                  {isStaffPortal ? 'Staff Portal' : isAdminPortal ? 'Admin Portal' : isDisplayPortal ? 'Live Display' : 'Student Portal'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 hidden sm:block font-medium">
-                St. Anthony&apos;s College &bull; Smart Student Queuing Platform
+                St. Anthony&apos;s College &bull; San Jose de Buenavista, Antique
               </p>
             </div>
-          </div>
+          </Link>
 
-          {/* Quick Role Switcher (MVP Demonstration Mode) */}
-          <div className="hidden md:flex items-center bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/90 text-xs font-medium shadow-inner">
-            <button
-              onClick={() => handleRoleChange('student')}
-              className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
-                currentRole === 'student'
-                  ? 'bg-white text-teal-950 shadow-sm font-bold scale-[1.02]'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <GraduationCap className="w-4 h-4 text-teal-600" aria-hidden="true" />
-              <span>Student View</span>
-            </button>
-            <button
-              onClick={() => handleRoleChange('staff')}
-              className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
-                currentRole === 'staff'
-                  ? 'bg-white text-teal-950 shadow-sm font-bold scale-[1.02]'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <UserCheck className="w-4 h-4 text-teal-600" aria-hidden="true" />
-              <span>Staff Desk</span>
-            </button>
-            <button
-              onClick={() => handleRoleChange('admin')}
-              className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
-                currentRole === 'admin'
-                  ? 'bg-white text-teal-950 shadow-sm font-bold scale-[1.02]'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4 text-teal-600" aria-hidden="true" />
-              <span>Admin & Analytics</span>
-            </button>
-          </div>
+          {/* Action icons & portal navigation */}
+          <div className="flex items-center space-x-3">
+            {/* Student View Specific Header Extras */}
+            {isStudentPortal && (
+              <button
+                onClick={requestBrowserPermission}
+                className="text-xs font-semibold text-teal-800 hover:text-teal-950 bg-teal-50 hover:bg-teal-100 px-3.5 py-2 rounded-xl border border-teal-200/90 transition-all hidden sm:flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+                title="Enable Browser Alerts for when your queue is called"
+              >
+                <span>🔔 Enable Push Alerts</span>
+              </button>
+            )}
 
-          {/* Action icons & Live TV display link */}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={requestBrowserPermission}
-              className="text-xs font-medium text-slate-600 hover:text-teal-700 bg-teal-50/60 hover:bg-teal-100/60 px-3 py-1.5 rounded-lg border border-teal-200/80 transition-colors hidden sm:flex items-center space-x-1 cursor-pointer"
-              title="Enable Browser Alerts for when your queue is called"
-            >
-              <span>🔔 Enable Push Alerts</span>
-            </button>
-
-            {/* Notifications Bell */}
+            {/* Notifications Bell (for student alerts) */}
             <div className="relative">
               <button
                 onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-                className="relative p-2 text-slate-600 hover:text-teal-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                className="relative p-2.5 text-slate-600 hover:text-teal-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
                 aria-label="Queue notifications"
               >
                 <Bell className="w-5 h-5" aria-hidden="true" />
@@ -126,7 +87,7 @@ export function NavigationHeader() {
 
               {/* Notification Dropdown */}
               {showNotifDropdown && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50">
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50 animate-in fade-in-50 zoom-in-95 duration-150">
                   <div className="flex items-center justify-between px-4 pb-2 border-b border-slate-100">
                     <h4 className="font-semibold text-sm text-slate-900">Notifications & Alerts</h4>
                     {notifications.length > 0 && (
@@ -174,6 +135,17 @@ export function NavigationHeader() {
                 </div>
               )}
             </div>
+
+            {/* If on staff or admin portal, provide clear link back to Student Portal */}
+            {!isStudentPortal && (
+              <Link
+                href="/"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-300 transition-colors flex items-center space-x-1.5 cursor-pointer"
+              >
+                <GraduationCap className="w-4 h-4 text-teal-600" />
+                <span>Student Portal</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
