@@ -395,69 +395,71 @@ function CashierTerminalContent() {
   // VIEW 2: AUTHENTICATED CASHIER TERMINAL (WHITE BASE)
   // -------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans overflow-x-hidden w-full max-w-full">
       {/* Top Bar for Cashier Desk */}
-      <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-3.5 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center space-x-3">
-          <SACLogo className="w-11 h-11 drop-shadow-xs" />
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-black text-[#751A1A] text-base tracking-tight">
+      <header className="bg-white border-b border-slate-200 px-3.5 sm:px-8 py-3 sm:py-3.5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center space-x-3 min-w-0">
+          <SACLogo className="w-10 h-10 sm:w-11 sm:h-11 drop-shadow-xs shrink-0" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center space-x-2 flex-wrap gap-1">
+              <span className="font-black text-[#751A1A] text-sm sm:text-base tracking-tight truncate">
                 ST. ANTHONY&apos;S COLLEGE
               </span>
-              <span className="bg-[#EA671B] text-white font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="bg-[#EA671B] text-white font-black text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
                 CASHIER TERMINAL
               </span>
             </div>
-            <p className="text-xs text-slate-600 font-medium">
-              Logged in as: <strong className="text-[#751A1A]">{cashierUser.name}</strong> ({cashierUser.email})
+            <p className="text-[11px] sm:text-xs text-slate-600 font-medium truncate">
+              Logged in as: <strong className="text-[#751A1A]">{cashierUser.name}</strong>
             </p>
           </div>
         </div>
 
         {/* Action Pills */}
-        <div className="flex items-center space-x-2.5">
-          <div className="bg-[#FFF8F1] border border-[#EA671B]/30 text-[#751A1A] text-xs px-3 py-1.5 rounded-xl flex items-center space-x-2">
+        <div className="flex items-center space-x-2 sm:space-x-2.5 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="bg-[#FFF8F1] border border-[#EA671B]/30 text-[#751A1A] text-[11px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-xl flex items-center space-x-1.5 sm:space-x-2 shrink-0">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="font-bold">WINDOW #{cashierUser.counterNumber} ACTIVE</span>
           </div>
 
-          <Link
-            href="/"
-            target="_blank"
-            className="bg-white hover:bg-[#FFF8F1] text-slate-700 hover:text-[#751A1A] text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition-colors cursor-pointer border border-slate-200 shadow-2xs"
-            title="Open Campus TV Display in New Tab"
-          >
-            <Tv className="w-3.5 h-3.5 text-[#EA671B]" />
-            <span className="hidden sm:inline">Live Campus TV</span>
-          </Link>
+          <div className="flex items-center space-x-2 shrink-0">
+            <Link
+              href="/"
+              target="_blank"
+              className="bg-white hover:bg-[#FFF8F1] text-slate-700 hover:text-[#751A1A] text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition-colors cursor-pointer border border-slate-200 shadow-2xs min-h-[36px]"
+              title="Open Campus TV Display in New Tab"
+            >
+              <Tv className="w-3.5 h-3.5 text-[#EA671B]" />
+              <span className="hidden xs:inline">Live Campus TV</span>
+            </Link>
 
-          <button
-            onClick={logoutCashier}
-            className="bg-[#751A1A] hover:bg-[#5A1212] text-white text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition-colors cursor-pointer shadow-2xs"
-            title="Log Out of Terminal"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sign Out</span>
-          </button>
+            <button
+              onClick={logoutCashier}
+              className="bg-[#751A1A] hover:bg-[#5A1212] text-white text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition-colors cursor-pointer shadow-2xs min-h-[36px]"
+              title="Log Out of Terminal"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main Operations Grid */}
-      <main className="max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white">
+      <main className="max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 bg-white">
         {/* LEFT COLUMN: ACTIVE CALLING & SERVICE CONTROLS (7 Cols) */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-4 sm:space-y-6">
           {/* Cashier Calling Card */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-[#EA671B]/25 relative overflow-hidden">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-md border-2 border-[#EA671B]/25 relative overflow-hidden">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 gap-2">
               <div className="flex items-center space-x-2">
-                <Receipt className="w-5 h-5 text-[#EA671B]" />
-                <h2 className="text-lg font-black text-[#751A1A] tracking-tight">
+                <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-[#EA671B]" />
+                <h2 className="text-base sm:text-lg font-black text-[#751A1A] tracking-tight">
                   Window {activeCounterNum} Serving Station
                 </h2>
               </div>
 
-              <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+              <span className={`text-[11px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full shrink-0 ${
                 currentTicket 
                   ? currentTicket.status === 'SERVING' 
                     ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
@@ -469,20 +471,20 @@ function CashierTerminalContent() {
             </div>
 
             {/* Big Ticket Display */}
-            <div className="my-6 text-center py-6 bg-[#FFF8F1]/60 rounded-2xl border border-[#EA671B]/20">
-              <span className="text-xs uppercase tracking-widest text-[#EA671B] font-black block mb-1">
+            <div className="my-4 sm:my-6 text-center py-4 sm:py-6 bg-[#FFF8F1]/60 rounded-2xl border border-[#EA671B]/20">
+              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#EA671B] font-black block mb-1">
                 CURRENT TICKET ASSIGNED
               </span>
-              <span className="text-6xl sm:text-7xl font-black font-mono text-[#751A1A] tracking-tight block">
+              <span className="text-5xl xs:text-6xl sm:text-7xl font-black font-mono text-[#751A1A] tracking-tight block leading-none my-1 sm:my-2">
                 {currentTicket ? currentTicket.ticketNumber : '---'}
               </span>
 
               {currentTicket ? (
-                <div className="mt-3 space-y-1">
-                  <span className="text-base font-bold text-slate-900 block">
+                <div className="mt-2 sm:mt-3 space-y-1">
+                  <span className="text-sm sm:text-base font-bold text-slate-900 block truncate">
                     {currentTicket.studentName}
                   </span>
-                  <div className="text-xs text-slate-600 flex items-center justify-center space-x-2">
+                  <div className="text-xs text-slate-600 flex items-center justify-center space-x-2 flex-wrap gap-1">
                     {currentTicket.studentNumber && (
                       <span className="font-mono bg-white px-2 py-0.5 rounded border border-slate-200">
                         ID: {currentTicket.studentNumber}
@@ -492,7 +494,7 @@ function CashierTerminalContent() {
                       {currentTicket.notes || 'Payment Slip Verification'}
                     </span>
                   </div>
-                  <div className="mt-2 text-xs font-mono text-slate-500 flex items-center justify-center space-x-1">
+                  <div className="mt-1.5 text-xs font-mono text-slate-500 flex items-center justify-center space-x-1">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
                     <span>Duration: {servingDuration}</span>
                   </div>
@@ -505,15 +507,15 @@ function CashierTerminalContent() {
             </div>
 
             {/* Action Buttons Toolbar */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               {/* Call Next Button */}
               <button
                 type="button"
                 onClick={handleCallNext}
                 disabled={waitingTickets.length === 0}
-                className="w-full bg-[#751A1A] hover:bg-[#5A1212] text-white font-black py-3.5 px-4 rounded-2xl shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-40"
+                className="w-full min-h-[46px] bg-[#751A1A] hover:bg-[#5A1212] text-white font-black py-3 sm:py-3.5 px-4 rounded-xl sm:rounded-2xl shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-40 text-xs sm:text-sm"
               >
-                <PhoneCall className="w-5 h-5 text-[#EA671B]" />
+                <PhoneCall className="w-4 h-4 sm:w-5 sm:h-5 text-[#EA671B]" />
                 <span>Call Next Student ({waitingTickets.length} in line)</span>
               </button>
 
@@ -522,21 +524,21 @@ function CashierTerminalContent() {
                 type="button"
                 onClick={handleRecall}
                 disabled={!currentTicket}
-                className="w-full bg-[#EA671B] hover:bg-[#D95B11] text-white font-bold py-3.5 px-4 rounded-2xl shadow-xs transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-40"
+                className="w-full min-h-[46px] bg-[#EA671B] hover:bg-[#D95B11] text-white font-bold py-3 sm:py-3.5 px-4 rounded-xl sm:rounded-2xl shadow-xs transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-40 text-xs sm:text-sm"
               >
-                <Volume2 className="w-5 h-5" />
+                <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Recall Ticket (Audio)</span>
               </button>
             </div>
 
             {/* Secondary Controls (Start, Complete, Skip, No-show) */}
             {currentTicket && (
-              <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
                   type="button"
                   onClick={() => startServing(currentTicket.id)}
                   disabled={currentTicket.status === 'SERVING'}
-                  className="p-2.5 rounded-xl text-xs font-bold bg-[#FFF8F1] text-[#751A1A] border border-[#EA671B]/30 hover:bg-white transition-colors flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50"
+                  className="min-h-[44px] p-2.5 rounded-xl text-xs font-bold bg-[#FFF8F1] text-[#751A1A] border border-[#EA671B]/30 hover:bg-white transition-colors flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50"
                 >
                   <Play className="w-3.5 h-3.5 text-[#EA671B]" />
                   <span>Start Serving</span>
@@ -545,16 +547,16 @@ function CashierTerminalContent() {
                 <button
                   type="button"
                   onClick={() => completeServing(currentTicket.id)}
-                  className="p-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex items-center justify-center space-x-1 cursor-pointer shadow-xs"
+                  className="min-h-[44px] p-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex items-center justify-center space-x-1 cursor-pointer shadow-xs"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  <span>Complete &amp; Receipt</span>
+                  <span>Complete</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => skipTicket(currentTicket.id)}
-                  className="p-2.5 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+                  className="min-h-[44px] p-2.5 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
                 >
                   <span>Skip Ticket</span>
                 </button>
@@ -562,10 +564,10 @@ function CashierTerminalContent() {
                 <button
                   type="button"
                   onClick={() => markNoShow(currentTicket.id)}
-                  className="p-2.5 rounded-xl text-xs font-semibold bg-red-50 text-red-800 border border-red-200 hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+                  className="min-h-[44px] p-2.5 rounded-xl text-xs font-semibold bg-red-50 text-red-800 border border-red-200 hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
                 >
                   <UserX className="w-3.5 h-3.5 text-red-600" />
-                  <span>Mark No-Show</span>
+                  <span>No-Show</span>
                 </button>
               </div>
             )}
