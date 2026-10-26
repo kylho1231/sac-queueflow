@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { INITIAL_CASHIER_TICKETS, CASHIER_COUNTERS } from '@/lib/cashier-data';
 import { QueueTicket, ServiceCounter } from '@/types/queue';
 import { ActiveCallNotification } from '@/context/CashierQueueContext';
+import { getNextSeqTicketNumber, formatTicketNumber } from '@/lib/utils';
 import fs from 'fs';
 import path from 'path';
 
@@ -25,10 +26,10 @@ function getInitialState(): ServerQueueState {
     tickets: JSON.parse(JSON.stringify(INITIAL_CASHIER_TICKETS)),
     counters: JSON.parse(JSON.stringify(CASHIER_COUNTERS)),
     latestCallNotification: {
-      id: 'init-c102',
-      ticketNumber: 'C-102',
+      id: 'init-c002',
+      ticketNumber: 'C-002',
       windowNumber: 2,
-      studentName: 'Ticket C-102',
+      studentName: 'Ticket C-002',
       calledAt: new Date().toISOString(),
       isRecall: false,
     },
@@ -64,18 +65,6 @@ function saveState(state: ServerQueueState) {
   } catch {}
 }
 
-function getNextTicketNumber(tickets: QueueTicket[]): string {
-  let highestNum = 100;
-  for (const t of tickets) {
-    const match = t.ticketNumber.match(/\d+/);
-    if (match) {
-      const num = parseInt(match[0], 10);
-      if (num > highestNum) highestNum = num;
-    }
-  }
-  return `C-${highestNum + 1}`;
-}
-
 export async function GET() {
   const state = loadState();
   return NextResponse.json(state, {
@@ -103,7 +92,7 @@ export async function POST(req: NextRequest) {
 
       // If no waiting tickets, auto-generate the next sequential ticket
       if (!nextTicket) {
-        const nextNum = getNextTicketNumber(state.tickets);
+        const nextNum = getNextSeqTicketNumber(state.tickets);
         nextTicket = {
           id: `tkt-csh-${Date.now()}`,
           ticketNumber: nextNum,
@@ -191,7 +180,7 @@ export async function POST(req: NextRequest) {
         .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime())[0];
 
       if (!nextTicket) {
-        const nextNum = getNextTicketNumber(state.tickets);
+        const nextNum = getNextSeqTicketNumber(state.tickets);
         nextTicket = {
           id: `tkt-csh-${Date.now()}`,
           ticketNumber: nextNum,
@@ -313,7 +302,7 @@ export async function POST(req: NextRequest) {
           .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime())[0];
 
         if (!nextTicket) {
-          const nextNum = getNextTicketNumber(state.tickets);
+          const nextNum = getNextSeqTicketNumber(state.tickets);
           nextTicket = {
             id: `tkt-csh-${Date.now()}`,
             ticketNumber: nextNum,
@@ -384,7 +373,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'ADD_TICKET') {
-      const nextNum = getNextTicketNumber(state.tickets);
+      const nextNum = getNextSeqTicketNumber(state.tickets);
       const newTicket: QueueTicket = {
         id: `tkt-csh-${Date.now()}`,
         ticketNumber: nextNum,

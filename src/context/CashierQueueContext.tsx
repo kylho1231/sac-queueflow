@@ -15,7 +15,7 @@ import {
   INITIAL_CASHIER_TICKETS, 
   CASHIER_ANNOUNCEMENTS 
 } from '@/lib/cashier-data';
-import { generateLookupCode, generateQRToken } from '@/lib/utils';
+import { generateLookupCode, generateQRToken, getNextSeqTicketNumber, formatTicketNumber } from '@/lib/utils';
 
 export interface ToastMessage {
   id: string;
@@ -314,19 +314,6 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('sac_cashier_user');
     } catch {}
     showToast('Session Closed', 'Cashier terminal logged out securely.', 'info');
-  };
-
-  // Helper to calculate next sequential ticket number
-  const getNextSeqTicketNumber = (ticketsList: QueueTicket[]): string => {
-    let highestNum = 100;
-    for (const t of ticketsList) {
-      const match = t.ticketNumber.match(/\d+/);
-      if (match) {
-        const num = parseInt(match[0], 10);
-        if (num > highestNum) highestNum = num;
-      }
-    }
-    return `C-${highestNum + 1}`;
   };
 
   // 3. Cashier Calls Next Ticket (NEVER FAILS: Auto-generates next if queue is empty)
@@ -648,8 +635,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     yearCourse = '',
     transactionLabel = ''
   ) => {
-    const nextSeq = tickets.length + 1;
-    const formattedNum = `C-${String(nextSeq).padStart(3, '0')}`;
+    const formattedNum = getNextSeqTicketNumber(tickets);
 
     const noteDetails = [
       transactionLabel ? `Type: ${transactionLabel}` : '',
