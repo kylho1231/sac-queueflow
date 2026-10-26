@@ -39,8 +39,11 @@ function CashierTerminalContent() {
     recallTicket,
     startServing,
     completeServing,
+    completeAndCallNext,
     skipTicket,
+    skipAndCallNext,
     markNoShow,
+    markNoShowAndCallNext,
     printNewTicket,
     tickets,
     nowServingTicket,
@@ -139,6 +142,38 @@ function CashierTerminalContent() {
     if (currentTicket) {
       recallTicket(currentTicket.id);
       announceTicket(currentTicket.ticketNumber, activeCounterNum, true);
+    }
+  };
+
+  // Complete and Immediately Call Next Student Handler
+  const handleCompleteAndCallNext = () => {
+    if (currentTicket) {
+      const nextTkt = completeAndCallNext(currentTicket.id, activeCounterNum);
+      if (nextTkt) {
+        announceTicket(nextTkt.ticketNumber, activeCounterNum);
+      }
+    } else {
+      handleCallNext();
+    }
+  };
+
+  // Skip and Call Next Student Handler
+  const handleSkipAndCallNext = () => {
+    if (currentTicket) {
+      const nextTkt = skipAndCallNext(currentTicket.id, activeCounterNum);
+      if (nextTkt) {
+        announceTicket(nextTkt.ticketNumber, activeCounterNum);
+      }
+    }
+  };
+
+  // Mark No-Show and Call Next Student Handler
+  const handleNoShowAndCallNext = () => {
+    if (currentTicket) {
+      const nextTkt = markNoShowAndCallNext(currentTicket.id, activeCounterNum);
+      if (nextTkt) {
+        announceTicket(nextTkt.ticketNumber, activeCounterNum);
+      }
     }
   };
 
@@ -459,17 +494,24 @@ function CashierTerminalContent() {
               )}
             </div>
 
-            {/* Giant Action Call Buttons */}
+            {/* Primary Action Call Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Call Next Button */}
+              {/* Call Next Button (Always Active - Auto-generates next number if queue is empty) */}
               <button
                 type="button"
                 onClick={handleCallNext}
-                disabled={waitingTickets.length === 0}
-                className="w-full min-h-[54px] bg-[#751A1A] hover:bg-[#5A1212] text-white font-black py-4 px-5 rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2.5 cursor-pointer disabled:opacity-40 text-sm sm:text-base"
+                className="w-full min-h-[56px] bg-[#751A1A] hover:bg-[#5A1212] text-white font-black py-3.5 px-5 rounded-2xl shadow-md hover:shadow-lg transition-all flex flex-col items-center justify-center cursor-pointer text-sm sm:text-base border border-[#EA671B]/30"
+                title="Call next student in queue or auto-issue next number"
               >
-                <PhoneCall className="w-5 h-5 text-[#EA671B]" />
-                <span>Call Next Student ({waitingTickets.length})</span>
+                <div className="flex items-center space-x-2">
+                  <PhoneCall className="w-5 h-5 text-[#EA671B]" />
+                  <span>Call Next Student</span>
+                </div>
+                <span className="text-[11px] font-normal text-amber-200/90 mt-0.5">
+                  {waitingTickets.length > 0 
+                    ? `(${waitingTickets.length} waiting in line)` 
+                    : '(Queue empty • Auto-summons next number)'}
+                </span>
               </button>
 
               {/* Recall Audio Voice */}
@@ -477,51 +519,74 @@ function CashierTerminalContent() {
                 type="button"
                 onClick={handleRecall}
                 disabled={!currentTicket}
-                className="w-full min-h-[54px] bg-[#EA671B] hover:bg-[#D95B11] text-white font-bold py-4 px-5 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-center space-x-2.5 cursor-pointer disabled:opacity-40 text-sm sm:text-base"
+                className="w-full min-h-[56px] bg-[#EA671B] hover:bg-[#D95B11] text-white font-bold py-3.5 px-5 rounded-2xl shadow-xs hover:shadow-md transition-all flex flex-col items-center justify-center cursor-pointer disabled:opacity-40 text-sm sm:text-base"
+                title="Repeat voice chime and audio callout"
               >
-                <Volume2 className="w-5 h-5" />
-                <span>Recall Ticket (Audio)</span>
+                <div className="flex items-center space-x-2">
+                  <Volume2 className="w-5 h-5" />
+                  <span>Recall Ticket (Audio)</span>
+                </div>
+                <span className="text-[11px] font-normal text-white/80 mt-0.5">
+                  {currentTicket ? `Re-announce ${currentTicket.ticketNumber}` : 'Window Idle'}
+                </span>
               </button>
             </div>
 
-            {/* Secondary Controls (Start Serving, Complete, Skip, No-show) */}
+            {/* Serving Lifecycle Actions */}
             {currentTicket && (
-              <div className="mt-5 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="mt-5 pt-4 border-t border-slate-100 space-y-3">
+                {/* 1-Click Complete & Call Next (Primary recommended cashier action) */}
                 <button
                   type="button"
-                  onClick={() => startServing(currentTicket.id)}
-                  disabled={currentTicket.status === 'SERVING'}
-                  className="min-h-[44px] p-2.5 rounded-xl text-xs font-bold bg-[#FFF8F1] text-[#751A1A] border border-[#EA671B]/30 hover:bg-white transition-colors flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50"
+                  onClick={handleCompleteAndCallNext}
+                  className="w-full min-h-[50px] bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-4 rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 cursor-pointer text-sm sm:text-base"
+                  title="Finish current transaction and immediately call the next number"
                 >
-                  <Play className="w-3.5 h-3.5 text-[#EA671B]" />
-                  <span>Start Serving</span>
+                  <CheckCircle2 className="w-5 h-5 text-emerald-200" />
+                  <span>Complete &amp; Call Next Student</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => completeServing(currentTicket.id)}
-                  className="min-h-[44px] p-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex items-center justify-center space-x-1 cursor-pointer shadow-xs"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Complete</span>
-                </button>
+                {/* Secondary status actions */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => startServing(currentTicket.id)}
+                    disabled={currentTicket.status === 'SERVING'}
+                    className="min-h-[42px] p-2 rounded-xl text-xs font-bold bg-[#FFF8F1] text-[#751A1A] border border-[#EA671B]/30 hover:bg-white transition-colors flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <Play className="w-3.5 h-3.5 text-[#EA671B]" />
+                    <span>Start Serving</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => skipTicket(currentTicket.id)}
-                  className="min-h-[44px] p-2.5 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <span>Skip</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => completeServing(currentTicket.id)}
+                    className="min-h-[42px] p-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+                    title="Complete payment and leave window available"
+                  >
+                    <Check className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Finish (Standby)</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => markNoShow(currentTicket.id)}
-                  className="min-h-[44px] p-2.5 rounded-xl text-xs font-semibold bg-red-50 text-red-800 border border-red-200 hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <UserX className="w-3.5 h-3.5 text-red-600" />
-                  <span>No-Show</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={handleSkipAndCallNext}
+                    className="min-h-[42px] p-2 rounded-xl text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+                    title="Skip student and immediately call next"
+                  >
+                    <span>Skip &amp; Next</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleNoShowAndCallNext}
+                    className="min-h-[42px] p-2 rounded-xl text-xs font-semibold bg-red-50 text-red-800 border border-red-200 hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+                    title="Mark absent and immediately call next"
+                  >
+                    <UserX className="w-3.5 h-3.5 text-red-600" />
+                    <span>No-Show &amp; Next</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
