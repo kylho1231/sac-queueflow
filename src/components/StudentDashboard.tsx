@@ -85,41 +85,62 @@ export function StudentDashboard() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-teal-800 via-teal-700 to-teal-900 rounded-3xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 opacity-10 pointer-events-none flex items-center pr-8">
-          <Building className="w-80 h-80 text-white" aria-hidden="true" />
+      {/* Welcome Hero Banner (Banner-Design Spec: Aurora Emerald & Gold Institutional Glow) */}
+      <div className="relative rounded-3xl overflow-hidden shadow-xl border border-teal-600/30 bg-gradient-to-br from-[#093533] via-[#0D4D47] to-[#0A2624] text-white p-6 sm:p-10 transition-all">
+        {/* Ambient Aurora Orbs */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-teal-400/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 -right-20 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.15),transparent_50%)] pointer-events-none" />
+
+        {/* Structural Background Pattern */}
+        <div className="absolute right-0 top-0 bottom-0 opacity-10 pointer-events-none flex items-center pr-6 hidden sm:flex">
+          <Building className="w-96 h-96 text-teal-200" aria-hidden="true" />
         </div>
 
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center space-x-2 bg-teal-600/50 backdrop-blur-xs px-3 py-1 rounded-full text-xs font-medium text-teal-100 mb-3 border border-teal-500/40">
+        <div className="relative z-10 max-w-3xl">
+          {/* Institutional Badge Pill */}
+          <div className="inline-flex items-center space-x-2 bg-teal-950/70 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-semibold text-teal-200 mb-4 border border-teal-500/30 shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <Sparkles className="w-3.5 h-3.5 text-amber-300" aria-hidden="true" />
-            <span>Welcome back, Antonian!</span>
+            <span>St. Anthony&apos;s College &bull; Official Campus Queue Hub</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            John Carlo Javier
+
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-xs">
+            Your Time Matters. <br className="hidden sm:inline" />
+            <span className="bg-gradient-to-r from-teal-200 via-teal-100 to-amber-300 bg-clip-text text-transparent">
+              Your Queue, Anywhere.
+            </span>
           </h1>
-          <p className="text-teal-100/90 text-sm mt-1">
-            Student ID: <span className="font-mono font-semibold">2023-08812</span> • College of Computer Studies
+
+          <div className="mt-4 flex flex-wrap items-center gap-y-2 gap-x-4 text-xs sm:text-sm text-teal-100/90 font-medium">
+            <div className="flex items-center space-x-1.5 bg-black/20 px-3 py-1 rounded-lg border border-white/10 backdrop-blur-xs">
+              <span className="text-teal-300 font-semibold">Student:</span>
+              <span>John Carlo Javier</span>
+              <span className="text-teal-400 font-mono">(2023-08812)</span>
+            </div>
+            <div className="flex items-center space-x-1.5 bg-black/20 px-3 py-1 rounded-lg border border-white/10 backdrop-blur-xs">
+              <Calendar className="w-3.5 h-3.5 text-amber-300" aria-hidden="true" />
+              <span>A.Y. 2026–2027 &bull; Regular Hours 8AM–5PM</span>
+            </div>
+          </div>
+
+          <p className="mt-3 text-xs sm:text-sm text-teal-100/80 leading-relaxed max-w-2xl">
+            Never miss an exam or lecture while waiting for Registrar or Cashier clearances. Get a digital ticket, attend your classes in peace, and return when your number is called.
           </p>
 
-          <p className="text-xs text-teal-200/80 mt-3 flex items-center space-x-1.5">
-            <Calendar className="w-4 h-4" aria-hidden="true" />
-            <span>Academic Year 2026–2027 • Regular Campus Hours: 8:00 AM – 5:00 PM</span>
-          </p>
-
-          <div className="mt-5 flex flex-wrap gap-2.5">
+          {/* Quick CTA Actions */}
+          <div className="mt-6 flex flex-wrap gap-3 items-center">
             <button
               onClick={() => setShowJoinModal(true)}
-              className="bg-amber-500 hover:bg-amber-400 text-teal-950 font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all hover:scale-[1.02] cursor-pointer text-sm flex items-center space-x-2"
+              className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-teal-950 font-black px-5 py-3 rounded-2xl shadow-lg shadow-amber-950/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-sm flex items-center space-x-2 border border-amber-300"
             >
               <span>+ Get a Queue Ticket</span>
             </button>
             <a
               href="#campus-offices"
-              className="bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2.5 rounded-xl backdrop-blur-xs transition-colors cursor-pointer text-sm"
+              className="bg-white/10 hover:bg-white/20 text-white font-semibold px-5 py-3 rounded-2xl backdrop-blur-md transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-sm border border-white/15 shadow-sm"
             >
-              Check Office Wait Times
+              View Office Status
             </a>
           </div>
         </div>
