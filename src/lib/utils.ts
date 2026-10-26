@@ -25,6 +25,42 @@ export function generateQRToken(ticketNumber: string): string {
 }
 
 /**
+ * Get current date string formatted as YYYY-MM-DD in Philippine Standard Time (Asia/Manila, UTC+8).
+ * Ensures daily reset triggers precisely at midnight in Antique, Philippines.
+ */
+export function getTodayDateString(): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+/**
+ * Extract YYYY-MM-DD date string for any ISO date in Philippine Standard Time.
+ */
+export function getTicketDateString(isoString?: string): string {
+  if (!isoString) return getTodayDateString();
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return getTodayDateString();
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d);
+  } catch {
+    return isoString.slice(0, 10);
+  }
+}
+
+/**
  * Format queue ticket number starting from 1 up to maximum 1000.
  * Default prefix is 'C' (Cashier Regular, e.g. C-001 to C-1000).
  * Senior Citizen prefix is 'S' (Senior Citizen Priority, e.g. S-001 to S-1000).
@@ -56,25 +92,32 @@ export function isSeniorCitizenTicket(
  * Calculate the next sequential ticket number from a tickets array for the specified prefix.
  * 'C' = Regular Cashier Queue (C-001 to C-1000)
  * 'S' = Senior Citizen Priority Queue (S-001 to S-1000)
+ * Automatically resets back to 1 every new day (Philippine Standard Time).
  */
 export function getNextSeqTicketNumber(
   ticketsList: { ticketNumber: string; issuedAt?: string }[],
-  prefix: 'C' | 'S' = 'C'
+  prefix: 'C' | 'S' = 'C',
+  targetDate: string = getTodayDateString()
 ): string {
   if (!ticketsList || ticketsList.length === 0) {
     return `${prefix}-001`;
   }
 
-  // Filter only tickets that match the requested prefix
+  // Filter only tickets that match the requested prefix AND issued on target date (today)
+  // This guarantees sequence resets back to 1 every new day!
   const validTickets = ticketsList.filter(
-    (t) => t && typeof t.ticketNumber === 'string' && t.ticketNumber.startsWith(`${prefix}-`)
+    (t) =>
+      t &&
+      typeof t.ticketNumber === 'string' &&
+      t.ticketNumber.startsWith(`${prefix}-`) &&
+      getTicketDateString(t.issuedAt) === targetDate
   );
 
   if (validTickets.length === 0) {
     return `${prefix}-001`;
   }
 
-  // Find the highest sequence number in the list
+  // Find the highest sequence number for today
   let maxNum = 0;
   for (const tkt of validTickets) {
     const match = tkt.ticketNumber.match(/\d+/);

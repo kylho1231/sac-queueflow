@@ -15,7 +15,15 @@ import {
   INITIAL_CASHIER_TICKETS, 
   CASHIER_ANNOUNCEMENTS 
 } from '@/lib/cashier-data';
-import { generateLookupCode, generateQRToken, getNextSeqTicketNumber, formatTicketNumber, isSeniorCitizenTicket } from '@/lib/utils';
+import { 
+  generateLookupCode, 
+  generateQRToken, 
+  getNextSeqTicketNumber, 
+  formatTicketNumber, 
+  isSeniorCitizenTicket,
+  getTodayDateString,
+  getTicketDateString 
+} from '@/lib/utils';
 
 export interface ToastMessage {
   id: string;
@@ -135,8 +143,9 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   const [lastGeneratedOtp, setLastGeneratedOtp] = useState<string | null>(null);
   const [latestCallNotification, setLatestCallNotification] = useState<ActiveCallNotification | null>(null);
 
-  // Restore session from localStorage if available
+  // Restore session from localStorage if available & handle daily midnight reset (Philippine Standard Time)
   useEffect(() => {
+    const today = getTodayDateString();
     try {
       const stored = localStorage.getItem('sac_cashier_user');
       if (stored) {
@@ -150,7 +159,76 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       if (storedNotif) {
         setLatestCallNotification(JSON.parse(storedNotif));
       }
+
+      // Check if calendar day transitioned
+      const storedDate = localStorage.getItem('sac_queue_active_date');
+      if (storedDate && storedDate !== today) {
+        // Daily reset: unserved/waiting tickets from yesterday close
+        const nowIso = new Date().toISOString();
+        let currentTkts: QueueTicket[] = INITIAL_CASHIER_TICKETS;
+        if (storedTkts) currentTkts = JSON.parse(storedTkts);
+        const transitioned = currentTkts.map(t => {
+          if (t.status === 'WAITING' || t.status === 'CALLED' || t.status === 'SERVING') {
+            return {
+              ...t,
+              status: 'COMPLETED' as const,
+              completedAt: t.completedAt || nowIso,
+              notes: t.notes ? `${t.notes} [Daily Auto-Close]` : '[Daily Auto-Close]',
+            };
+          }
+          return t;
+        });
+        const resetCounters = CASHIER_COUNTERS.map(c => ({
+          ...c,
+          currentTicketId: undefined,
+          statusText: 'Available',
+        }));
+        setTickets(transitioned);
+        setCounters(resetCounters);
+        setLatestCallNotification(null);
+        localStorage.setItem('sac_cashier_tickets', JSON.stringify(transitioned));
+        localStorage.removeItem('sac_latest_call_notification');
+        localStorage.setItem('sac_queue_active_date', today);
+      } else if (!storedDate) {
+        localStorage.setItem('sac_queue_active_date', today);
+      }
     } catch {}
+
+    // Check periodically if date changes while session is left running overnight
+    const midnightChecker = setInterval(() => {
+      const currentDay = getTodayDateString();
+      const activeSavedDate = localStorage.getItem('sac_queue_active_date');
+      if (activeSavedDate && activeSavedDate !== currentDay) {
+        const nowIso = new Date().toISOString();
+        setTickets(prev => {
+          const transitioned = prev.map(t => {
+            if (t.status === 'WAITING' || t.status === 'CALLED' || t.status === 'SERVING') {
+              return {
+                ...t,
+                status: 'COMPLETED' as const,
+                completedAt: t.completedAt || nowIso,
+                notes: t.notes ? `${t.notes} [Daily Auto-Close]` : '[Daily Auto-Close]',
+              };
+            }
+            return t;
+          });
+          try {
+            localStorage.setItem('sac_cashier_tickets', JSON.stringify(transitioned));
+          } catch {}
+          return transitioned;
+        });
+        setCounters(CASHIER_COUNTERS.map(c => ({
+          ...c,
+          currentTicketId: undefined,
+          statusText: 'Available',
+        })));
+        setLatestCallNotification(null);
+        try {
+          localStorage.removeItem('sac_latest_call_notification');
+          localStorage.setItem('sac_queue_active_date', currentDay);
+        } catch {}
+      }
+    }, 30000);
 
     let channel: BroadcastChannel | null = null;
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -181,6 +259,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener('storage', handleStorage);
 
     return () => {
+      clearInterval(midnightChecker);
       if (channel) channel.close();
       window.removeEventListener('storage', handleStorage);
     };

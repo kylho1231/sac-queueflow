@@ -6,8 +6,9 @@ import { QueueProvider, useCashierQueue, WindowNumber } from '@/context/CashierQ
 import { SACLogo } from '@/components/SACLogo';
 import { ToastContainer } from '@/components/ToastContainer';
 import { CallNotificationAlert } from '@/components/CallNotificationAlert';
+import { CashierAnalytics } from '@/components/CashierAnalytics';
 import { playFullAudioCall } from '@/lib/notifications';
-import { isSeniorCitizenTicket } from '@/lib/utils';
+import { isSeniorCitizenTicket, getTodayDateString, getTicketDateString } from '@/lib/utils';
 import { 
   KeyRound, 
   Mail, 
@@ -27,7 +28,9 @@ import {
   PlusCircle,
   Users,
   Radio,
-  HeartHandshake
+  HeartHandshake,
+  BarChart3,
+  ArrowRight
 } from 'lucide-react';
 
 function CashierTerminalContent() {
@@ -75,6 +78,22 @@ function CashierTerminalContent() {
     .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime());
 
   const waitingSeniorsCount = waitingTickets.filter(t => isSeniorCitizenTicket(t)).length;
+
+  // Tab view: 'terminal' (Calling station) or 'analytics' (Transaction statistics)
+  const [activeTab, setActiveTab] = useState<'terminal' | 'analytics'>('terminal');
+
+  // Daily transaction metrics (evaluated safely post-hydration to allow Next.js prerendering)
+  const [todayStr, setTodayStr] = useState<string>('');
+  useEffect(() => {
+    setTodayStr(getTodayDateString());
+  }, []);
+
+  const completedTodayTickets = todayStr
+    ? tickets.filter(t => t.status === 'COMPLETED' && getTicketDateString(t.issuedAt) === todayStr)
+    : [];
+  const completedTodayCount = completedTodayTickets.length;
+  const regularCompletedToday = completedTodayTickets.filter(t => !isSeniorCitizenTicket(t)).length;
+  const seniorCompletedToday = completedTodayTickets.filter(t => isSeniorCitizenTicket(t)).length;
 
   // Timer effect
   useEffect(() => {
@@ -391,6 +410,41 @@ function CashierTerminalContent() {
           </div>
         </div>
 
+        {/* View Switcher Tabs: Calling Desk vs Transaction Analytics */}
+        <div className="flex items-center bg-[#FFF8F1] p-1 rounded-2xl border border-[#EA671B]/30 self-stretch sm:self-auto justify-center">
+          <button
+            type="button"
+            onClick={() => setActiveTab('terminal')}
+            className={`min-h-[40px] px-3.5 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+              activeTab === 'terminal'
+                ? 'bg-[#751A1A] text-white shadow-xs'
+                : 'text-slate-700 hover:text-[#751A1A]'
+            }`}
+          >
+            <Radio className="w-3.5 h-3.5 text-amber-200" />
+            <span>Calling Desk</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('analytics')}
+            className={`min-h-[40px] px-3.5 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+              activeTab === 'analytics'
+                ? 'bg-[#751A1A] text-white shadow-xs'
+                : 'text-slate-700 hover:text-[#751A1A]'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5 text-amber-200" />
+            <span>Analytics</span>
+            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-black ${
+              activeTab === 'analytics'
+                ? 'bg-[#EA671B] text-white'
+                : 'bg-[#751A1A] text-white'
+            }`}>
+              {completedTodayCount}
+            </span>
+          </button>
+        </div>
+
         {/* Action Pills */}
         <div className="flex items-center space-x-2 sm:space-x-2.5 w-full sm:w-auto justify-between sm:justify-end">
           <div className="bg-[#FFF8F1] border border-[#EA671B]/30 text-[#751A1A] text-[11px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-xl flex items-center space-x-1.5 sm:space-x-2 shrink-0">
@@ -406,7 +460,7 @@ function CashierTerminalContent() {
               title="Open Campus TV Display in New Tab"
             >
               <Tv className="w-3.5 h-3.5 text-[#EA671B]" />
-              <span className="hidden xs:inline">Live Campus TV</span>
+              <span className="hidden xs:inline">Campus TV</span>
             </Link>
 
             <button
@@ -427,29 +481,71 @@ function CashierTerminalContent() {
         onDismiss={dismissCallNotification}
       />
 
-      {/* Live Windows Status Strip (What number is in now across Windows 1 to 5) */}
-      <div className="bg-[#FFF8F1] border-b border-[#EA671B]/25 px-3.5 sm:px-8 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs gap-2">
-        <div className="flex items-center space-x-2">
-          <Radio className="w-3.5 h-3.5 text-[#EA671B] animate-pulse" aria-hidden="true" />
-          <span className="font-extrabold text-[#751A1A] uppercase tracking-wider">
-            Live Calling Status (What Number is In Now):
-          </span>
-        </div>
-        <div className="flex items-center space-x-2 font-mono font-bold flex-wrap gap-1.5">
-          {([1, 2, 3, 4, 5] as const).map((win) => {
-            const serv = nowServingTicket(win);
-            return (
-              <span key={win} className="bg-white px-2.5 py-1 rounded-lg border border-[#EA671B]/30 text-slate-800 flex items-center space-x-1.5 shadow-2xs">
-                <span className={`w-2 h-2 rounded-full ${serv ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
-                <span>W-{win}: <strong className="text-[#751A1A]">{serv ? serv.ticketNumber : 'Standby'}</strong></span>
+      {activeTab === 'analytics' ? (
+        <main className="flex-1 bg-white">
+          <CashierAnalytics onBackToTerminal={() => setActiveTab('terminal')} />
+        </main>
+      ) : (
+        <>
+          {/* Live Windows Status Strip (What number is in now across Windows 1 to 5) */}
+          <div className="bg-[#FFF8F1] border-b border-[#EA671B]/25 px-3.5 sm:px-8 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs gap-2">
+            <div className="flex items-center space-x-2">
+              <Radio className="w-3.5 h-3.5 text-[#EA671B] animate-pulse" aria-hidden="true" />
+              <span className="font-extrabold text-[#751A1A] uppercase tracking-wider">
+                Live Calling Status (What Number is In Now):
               </span>
-            );
-          })}
-        </div>
-      </div>
+            </div>
+            <div className="flex items-center space-x-2 font-mono font-bold flex-wrap gap-1.5">
+              {([1, 2, 3, 4, 5] as const).map((win) => {
+                const serv = nowServingTicket(win);
+                return (
+                  <span key={win} className="bg-white px-2.5 py-1 rounded-lg border border-[#EA671B]/30 text-slate-800 flex items-center space-x-1.5 shadow-2xs">
+                    <span className={`w-2 h-2 rounded-full ${serv ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                    <span>W-{win}: <strong className="text-[#751A1A]">{serv ? serv.ticketNumber : 'Standby'}</strong></span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
 
-      {/* Main Operations Area: Focused 100% on Calling Out Numbers */}
-      <main className="max-w-6xl w-full mx-auto p-3 sm:p-6 lg:p-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white items-start">
+          {/* Real-time Throughput Strip on Calling Desk */}
+          <div className="max-w-6xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+            <div className="bg-[#FFF8F1] border-2 border-[#EA671B]/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center space-x-3 min-w-0">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#751A1A] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                  <BarChart3 className="w-5 h-5 text-amber-200" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center space-x-2 flex-wrap gap-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#B44606]">
+                      TODAY&apos;S CASHIER TRANSACTIONS
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.2 rounded-full border border-emerald-200">
+                      Resets Daily #1
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-800 font-bold mt-0.5">
+                    <strong className="text-[#751A1A] font-black text-base sm:text-lg">{completedTodayCount}</strong> students transacted today
+                    <span className="text-xs font-normal text-slate-600 ml-1.5">
+                      ({regularCompletedToday} Regular &bull; {seniorCompletedToday} Senior Citizen)
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('analytics')}
+                className="min-h-[44px] bg-white hover:bg-[#FFF8F1] text-[#751A1A] hover:text-[#5A1212] border-2 border-[#EA671B]/40 hover:border-[#EA671B] text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center space-x-2 cursor-pointer shadow-2xs shrink-0 self-stretch sm:self-auto justify-center"
+              >
+                <span>View Full Analytics Dashboard</span>
+                <ArrowRight className="w-3.5 h-3.5 text-[#EA671B]" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Operations Area: Focused 100% on Calling Out Numbers */}
+          <main className="max-w-6xl w-full mx-auto p-3 sm:p-6 lg:p-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white items-start">
         {/* PRIMARY CALLING STATION (7 Cols) */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-white rounded-3xl p-5 sm:p-8 shadow-md border-2 border-[#EA671B]/30 relative overflow-hidden">
@@ -731,6 +827,8 @@ function CashierTerminalContent() {
           </div>
         </div>
       </main>
+      </>
+      )}
 
       <ToastContainer />
     </div>
@@ -739,8 +837,10 @@ function CashierTerminalContent() {
 
 export default function CashierPage() {
   return (
-    <QueueProvider>
-      <CashierTerminalContent />
-    </QueueProvider>
+    <React.Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <QueueProvider>
+        <CashierTerminalContent />
+      </QueueProvider>
+    </React.Suspense>
   );
 }

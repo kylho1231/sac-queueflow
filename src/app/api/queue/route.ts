@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { INITIAL_CASHIER_TICKETS, CASHIER_COUNTERS } from '@/lib/cashier-data';
 import { QueueTicket, ServiceCounter } from '@/types/queue';
 import { ActiveCallNotification, WindowNumber } from '@/context/CashierQueueContext';
-import { getNextSeqTicketNumber, formatTicketNumber, isSeniorCitizenTicket } from '@/lib/utils';
+import { 
+  getNextSeqTicketNumber, 
+  formatTicketNumber, 
+  isSeniorCitizenTicket,
+  getTodayDateString,
+  getTicketDateString
+} from '@/lib/utils';
 import fs from 'fs';
 import path from 'path';
 
@@ -11,6 +17,7 @@ interface ServerQueueState {
   counters: ServiceCounter[];
   latestCallNotification: ActiveCallNotification | null;
   lastUpdated: number;
+  activeDate?: string;
 }
 
 // In-memory global state for serverless lifetime
@@ -34,26 +41,66 @@ function getInitialState(): ServerQueueState {
       isRecall: false,
     },
     lastUpdated: 0,
+    activeDate: getTodayDateString(),
   };
 }
 
-function loadState(): ServerQueueState {
-  if (globalThis.__SAC_SERVER_QUEUE_STATE) {
-    return globalThis.__SAC_SERVER_QUEUE_STATE;
+function checkAndApplyDailyReset(state: ServerQueueState): ServerQueueState {
+  const today = getTodayDateString();
+  if (state.activeDate && state.activeDate !== today) {
+    // New calendar day in Philippine Standard Time (Asia/Manila)!
+    const nowIso = new Date().toISOString();
+    state.tickets = state.tickets.map((t) => {
+      if (t.status === 'WAITING' || t.status === 'CALLED' || t.status === 'SERVING') {
+        return {
+          ...t,
+          status: 'COMPLETED' as const,
+          completedAt: t.completedAt || nowIso,
+          notes: t.notes ? `${t.notes} [Daily Auto-Close]` : '[Daily Auto-Close]',
+        };
+      }
+      return t;
+    });
+
+    state.counters = state.counters.map((c) => ({
+      ...c,
+      currentTicketId: undefined,
+      statusText: 'Available',
+    }));
+
+    state.latestCallNotification = null;
+    state.activeDate = today;
+    saveState(state);
+  } else if (!state.activeDate) {
+    state.activeDate = today;
+    saveState(state);
   }
+  return state;
+}
 
-  try {
-    if (fs.existsSync(TMP_FILE_PATH)) {
-      const data = fs.readFileSync(TMP_FILE_PATH, 'utf-8');
-      const parsed = JSON.parse(data);
-      globalThis.__SAC_SERVER_QUEUE_STATE = parsed;
-      return parsed;
+function loadState(): ServerQueueState {
+  let state: ServerQueueState;
+  if (globalThis.__SAC_SERVER_QUEUE_STATE) {
+    state = globalThis.__SAC_SERVER_QUEUE_STATE;
+  } else {
+    try {
+      if (fs.existsSync(TMP_FILE_PATH)) {
+        const data = fs.readFileSync(TMP_FILE_PATH, 'utf-8');
+        const parsed = JSON.parse(data);
+        globalThis.__SAC_SERVER_QUEUE_STATE = parsed;
+        state = parsed;
+      } else {
+        const initial = getInitialState();
+        globalThis.__SAC_SERVER_QUEUE_STATE = initial;
+        state = initial;
+      }
+    } catch {
+      const initial = getInitialState();
+      globalThis.__SAC_SERVER_QUEUE_STATE = initial;
+      state = initial;
     }
-  } catch {}
-
-  const initial = getInitialState();
-  globalThis.__SAC_SERVER_QUEUE_STATE = initial;
-  return initial;
+  }
+  return checkAndApplyDailyReset(state);
 }
 
 function saveState(state: ServerQueueState) {
@@ -443,7 +490,7 @@ export async function POST(req: NextRequest) {
           .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime())[0];
 
         if (!nextTicket) {
-          const nextNum = getNextSeqTicketNumber(state.tickets);
+          const nextNum = getNextSeqTicketNumber(state.tickets, 'C');
           nextTicket = {
             id: `tkt-csh-${Date.now()}`,
             ticketNumber: nextNum,
