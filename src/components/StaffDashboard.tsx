@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQueue } from '@/context/QueueContext';
-import { getStatusBadgeConfig } from '@/lib/queue-engine';
 import { 
   PhoneCall, 
   RotateCcw, 
@@ -13,10 +12,8 @@ import {
   Pause, 
   QrCode, 
   PlusCircle, 
-  ArrowRightLeft, 
   Clock, 
-  Users, 
-  AlertCircle 
+  Users
 } from 'lucide-react';
 
 export function StaffDashboard() {
@@ -44,6 +41,13 @@ export function StaffDashboard() {
   const [walkInServiceId, setWalkInServiceId] = useState<string>('');
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [verificationCodeInput, setVerificationCodeInput] = useState<string>('');
+
+  const [currentTimeMs, setCurrentTimeMs] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTimeMs(Date.now()), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const activeCounter = officeCounters.find(c => c.id === selectedCounterId) || officeCounters[0];
   
@@ -245,7 +249,7 @@ export function StaffDashboard() {
                     No Active Ticket
                   </span>
                   <span className="text-xs text-slate-500 mt-1 block">
-                    Counter is currently idle. Click "Call Next Student" below.
+                    Counter is currently idle. Click &quot;Call Next Student&quot; below.
                   </span>
                 </div>
               )}
@@ -404,7 +408,7 @@ export function StaffDashboard() {
                       <p className="text-[11px] text-slate-600 truncate max-w-[150px]">{tkt.studentName}</p>
                     </div>
                     <span className="text-[10px] text-slate-400">
-                      {Math.max(1, Math.round((Date.now() - new Date(tkt.issuedAt).getTime()) / 60000))}m ago
+                      {currentTimeMs > 0 ? `${Math.max(1, Math.round((currentTimeMs - new Date(tkt.issuedAt).getTime()) / 60000))}m ago` : 'recently'}
                     </span>
                   </div>
                 ))

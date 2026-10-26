@@ -11,13 +11,12 @@ import {
   PauseCircle, 
   PlayCircle, 
   XCircle, 
-  CheckCircle2, 
   MapPin, 
-  AlertTriangle,
-  Sparkles,
-  Calendar,
-  Building,
-  Info
+  AlertTriangle, 
+  Sparkles, 
+  Calendar, 
+  Building, 
+  Info 
 } from 'lucide-react';
 import QRCode from 'qrcode';
 
@@ -271,7 +270,7 @@ export function StudentDashboard() {
 
                   {isDeferred && (
                     <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-950">
-                      <strong>Class Conflict Active</strong>: "{ticket.defermentReason}".
+                      <strong>Class Conflict Active</strong>: &quot;{ticket.defermentReason}&quot;.
                       <p className="text-[11px] text-blue-800 mt-0.5">
                         Deferment #{ticket.defermentCount} of {ticket.maxDefermentsAllowed}. Resume when your class concludes.
                       </p>
@@ -496,7 +495,7 @@ export function StudentDashboard() {
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center">
             <span className="text-[11px] font-bold text-teal-800 uppercase tracking-wider block">
-              St. Anthony's College Pass
+              St. Anthony&apos;s College Pass
             </span>
             <h3 className="text-xl font-black text-slate-900 mt-1">
               Ticket {showQRModal.ticketNumber}

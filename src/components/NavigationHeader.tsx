@@ -8,10 +8,7 @@ import {
   GraduationCap, 
   UserCheck, 
   ShieldCheck, 
-  Tv, 
-  Bell, 
-  CheckCircle,
-  HelpCircle
+  Bell
 } from 'lucide-react';
 
 export function NavigationHeader() {
@@ -60,7 +57,7 @@ export function NavigationHeader() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 hidden sm:block">
-                St. Anthony's College • Smart Campus Queuing
+                St. Anthony&apos;s College • Smart Campus Queuing
               </p>
             </div>
           </div>

@@ -36,7 +36,7 @@ function MainAppShell() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 bg-white/70 backdrop-blur-xs p-3 rounded-2xl border border-teal-100 shadow-xs">
           <div className="flex items-center space-x-2 text-xs font-medium text-slate-600">
             <span className="text-teal-900 font-bold">SAC QueueFlow System:</span>
-            <span>Active Campus Mode &bull; St. Anthony's College, Antique</span>
+            <span>Active Campus Mode &bull; St. Anthony&apos;s College, Antique</span>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -58,7 +58,7 @@ function MainAppShell() {
 
       <footer className="border-t border-teal-100/80 bg-white py-6 text-center text-xs text-slate-500">
         <p className="font-medium text-slate-700">
-          SAC QueueFlow &bull; St. Anthony's College, San Jose de Buenavista, Antique, Philippines
+          SAC QueueFlow &bull; St. Anthony&apos;s College, San Jose de Buenavista, Antique, Philippines
         </p>
         <p className="text-[11px] text-slate-400 mt-1">
           Philippine Data Privacy Act Compliant &bull; Safe Queuing for Antonians Anywhere

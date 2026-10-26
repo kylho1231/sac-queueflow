@@ -3,20 +3,15 @@
 import React, { useState } from 'react';
 import { useQueue } from '@/context/QueueContext';
 import { 
-  BarChart3, 
-  TrendingUp, 
-  Clock, 
   Users, 
   FileSpreadsheet, 
   ShieldCheck, 
-  AlertCircle,
-  Building2,
-  Calendar,
+  Building2, 
   Filter
 } from 'lucide-react';
 
 export function AdminAnalytics() {
-  const { offices, services, counters, tickets, announcements } = useQueue();
+  const { offices, counters, tickets } = useQueue();
   const [selectedOfficeFilter, setSelectedOfficeFilter] = useState<string>('all');
 
   // Filtered tickets based on office

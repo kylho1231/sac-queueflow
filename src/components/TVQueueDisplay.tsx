@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQueue } from '@/context/QueueContext';
-import { Volume2, VolumeX, Maximize2, Minimize2, Tv } from 'lucide-react';
+import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 
 export function TVQueueDisplay() {
   const { offices, tickets, counters, announcements } = useQueue();
@@ -61,7 +61,7 @@ export function TVQueueDisplay() {
       <div className="flex items-center justify-between pb-6 border-b border-slate-800">
         <div>
           <span className="text-xs sm:text-sm font-bold text-teal-400 uppercase tracking-widest block">
-            ST. ANTHONY'S COLLEGE • SAN JOSE DE BUENAVISTA, ANTIQUE
+            ST. ANTHONY&apos;S COLLEGE • SAN JOSE DE BUENAVISTA, ANTIQUE
           </span>
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-1">
             {currentOffice.name} — Live TV Display
