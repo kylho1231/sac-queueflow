@@ -82,7 +82,7 @@ export default function StudentLiveTVMonitor() {
               CASHIER&apos;S OFFICE &bull; LIVE QUEUE MONITOR
             </h1>
             <p className="text-[11px] sm:text-xs text-slate-600 font-medium leading-tight sm:leading-normal mt-0.5">
-              Campus TV &amp; PWA Display &bull; Present Completed Slip (Form FO 07)
+              Campus TV &amp; PWA Display &bull; Watch for your assigned number to be called
             </p>
           </div>
         </div>
@@ -220,7 +220,7 @@ export default function StudentLiveTVMonitor() {
             </div>
 
             <p className="text-[11px] text-slate-500 mt-2">
-              Have your physical printed queue ticket &amp; Payment Slip Form FO 07 ready.
+              Please wait for your assigned number to be called to Window 1 or Window 2.
             </p>
 
             <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-2.5 max-h-72 overflow-y-auto">
@@ -261,10 +261,10 @@ export default function StudentLiveTVMonitor() {
           <div className="mt-4 sm:mt-6 p-3.5 sm:p-4 rounded-2xl bg-[#FFF8F1] border border-[#EA671B]/30 text-xs text-slate-700 space-y-1 shadow-2xs">
             <div className="flex items-center space-x-1.5 text-[#751A1A] font-bold">
               <Sparkles className="w-4 h-4 text-[#EA671B] shrink-0" />
-              <span>Antonian Cashier Reminder:</span>
+              <span>Antonian Queuing Notice:</span>
             </div>
             <p className="text-[11px] leading-relaxed text-slate-600">
-              Please present your official physical <strong>Payment Slip (Form Code: FO 07)</strong> with exact student number and stated fees to the cashier window when called.
+              Please monitor this live screen. When your queue number is announced, proceed directly to the designated Cashier Window 1 or 2.
             </p>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function StudentLiveTVMonitor() {
             NOTICE
           </span>
           <span className="truncate text-slate-800 font-medium">
-            {announcements[0]?.content || "Form Code: FO 07, Rev 1 required for all cashier transactions. Office hours 8:00 AM – 5:00 PM."}
+            Cashier Windows 1 &amp; 2 are actively calling. Please proceed promptly when your number flashes.
           </span>
         </div>
 
