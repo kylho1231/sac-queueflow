@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { INITIAL_CASHIER_TICKETS, CASHIER_COUNTERS } from '@/lib/cashier-data';
 import { QueueTicket, ServiceCounter } from '@/types/queue';
 import { ActiveCallNotification } from '@/context/CashierQueueContext';
-import { getNextSeqTicketNumber, formatTicketNumber } from '@/lib/utils';
+import { getNextSeqTicketNumber, formatTicketNumber, isSeniorCitizenTicket } from '@/lib/utils';
 import fs from 'fs';
 import path from 'path';
 
@@ -84,31 +84,71 @@ export async function POST(req: NextRequest) {
     if (action === 'CALL_NEXT') {
       const counterNumber = (body.counterNumber || 1) as 1 | 2;
       const counter = state.counters.find((c) => c.counterNumber === counterNumber);
+      const isSeniorRequest = body.isSeniorCitizen || body.preference === 'SENIOR_CITIZEN';
 
       // Check for waiting tickets
-      let nextTicket = state.tickets
+      const waitingList = state.tickets
         .filter((t) => t.status === 'WAITING')
-        .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime())[0];
+        .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime());
 
-      // If no waiting tickets, auto-generate the next sequential ticket
-      if (!nextTicket) {
-        const nextNum = getNextSeqTicketNumber(state.tickets);
-        nextTicket = {
-          id: `tkt-csh-${Date.now()}`,
-          ticketNumber: nextNum,
-          officeId: 'off-cashier',
-          serviceId: 'srv-exam-period-payment',
-          studentId: `walkin-${Date.now()}`,
-          studentName: `Ticket ${nextNum}`,
-          isWalkIn: true,
-          qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-          lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
-          status: 'WAITING',
-          issuedAt: nowIso,
-          defermentCount: 0,
-          maxDefermentsAllowed: 1,
-        };
-        state.tickets.push(nextTicket);
+      let nextTicket: QueueTicket;
+
+      if (isSeniorRequest) {
+        const waitingSenior = waitingList.find((t) => isSeniorCitizenTicket(t));
+        if (waitingSenior) {
+          nextTicket = waitingSenior;
+        } else {
+          // Auto-generate the next sequential Senior Citizen number (S-001 to S-1000)
+          const nextNum = getNextSeqTicketNumber(state.tickets, 'S');
+          nextTicket = {
+            id: `tkt-senior-${Date.now()}`,
+            ticketNumber: nextNum,
+            officeId: 'off-cashier',
+            serviceId: 'srv-exam-period-payment',
+            studentId: `senior-${Date.now()}`,
+            studentName: `Senior Citizen (${nextNum})`,
+            isWalkIn: true,
+            qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+            lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
+            status: 'WAITING',
+            issuedAt: nowIso,
+            defermentCount: 0,
+            maxDefermentsAllowed: 1,
+            isSeniorCitizen: true,
+            ticketType: 'SENIOR_CITIZEN',
+            notes: 'Priority Lane • Senior Citizen',
+          };
+          state.tickets.push(nextTicket);
+        }
+      } else {
+        // General calling: prioritize waiting Senior Citizens first (RA 9994 Priority Lane)
+        const prioritySenior = waitingList.find((t) => isSeniorCitizenTicket(t));
+        if (prioritySenior) {
+          nextTicket = prioritySenior;
+        } else if (waitingList.length > 0) {
+          nextTicket = waitingList[0];
+        } else {
+          // Auto-generate the next sequential regular number (C-001 to C-1000)
+          const nextNum = getNextSeqTicketNumber(state.tickets, 'C');
+          nextTicket = {
+            id: `tkt-csh-${Date.now()}`,
+            ticketNumber: nextNum,
+            officeId: 'off-cashier',
+            serviceId: 'srv-exam-period-payment',
+            studentId: `walkin-${Date.now()}`,
+            studentName: `Ticket ${nextNum}`,
+            isWalkIn: true,
+            qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+            lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
+            status: 'WAITING',
+            issuedAt: nowIso,
+            defermentCount: 0,
+            maxDefermentsAllowed: 1,
+            isSeniorCitizen: false,
+            ticketType: 'REGULAR',
+          };
+          state.tickets.push(nextTicket);
+        }
       }
 
       // Mark the ticket as CALLED, and complete any prior ticket on this counter
@@ -144,6 +184,7 @@ export async function POST(req: NextRequest) {
         return c;
       });
 
+      const isSenior = isSeniorCitizenTicket(nextTicket);
       const callNotif: ActiveCallNotification = {
         id: `call-${nextTicket.id}-${Date.now()}`,
         ticketNumber: nextTicket.ticketNumber,
@@ -151,6 +192,7 @@ export async function POST(req: NextRequest) {
         studentName: nextTicket.studentName,
         calledAt: nowIso,
         isRecall: false,
+        isSeniorCitizen: isSenior,
       };
 
       state.latestCallNotification = callNotif;
@@ -160,9 +202,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'COMPLETE_AND_CALL_NEXT') {
-      const { ticketId, counterNumber = 1 } = body;
+      const { ticketId, counterNumber = 1, isSeniorCitizen, preference } = body;
       const counterNum = counterNumber as 1 | 2;
       const counter = state.counters.find((c) => c.counterNumber === counterNum);
+      const isSeniorRequest = isSeniorCitizen || preference === 'SENIOR_CITIZEN';
 
       // 1. Complete existing ticket if provided
       if (ticketId) {
@@ -175,28 +218,65 @@ export async function POST(req: NextRequest) {
       }
 
       // 2. Find next waiting or auto-generate
-      let nextTicket = state.tickets
+      const waitingList = state.tickets
         .filter((t) => t.status === 'WAITING')
-        .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime())[0];
+        .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime());
 
-      if (!nextTicket) {
-        const nextNum = getNextSeqTicketNumber(state.tickets);
-        nextTicket = {
-          id: `tkt-csh-${Date.now()}`,
-          ticketNumber: nextNum,
-          officeId: 'off-cashier',
-          serviceId: 'srv-exam-period-payment',
-          studentId: `walkin-${Date.now()}`,
-          studentName: `Ticket ${nextNum}`,
-          isWalkIn: true,
-          qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-          lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
-          status: 'WAITING',
-          issuedAt: nowIso,
-          defermentCount: 0,
-          maxDefermentsAllowed: 1,
-        };
-        state.tickets.push(nextTicket);
+      let nextTicket: QueueTicket;
+
+      if (isSeniorRequest) {
+        const waitingSenior = waitingList.find((t) => isSeniorCitizenTicket(t));
+        if (waitingSenior) {
+          nextTicket = waitingSenior;
+        } else {
+          const nextNum = getNextSeqTicketNumber(state.tickets, 'S');
+          nextTicket = {
+            id: `tkt-senior-${Date.now()}`,
+            ticketNumber: nextNum,
+            officeId: 'off-cashier',
+            serviceId: 'srv-exam-period-payment',
+            studentId: `senior-${Date.now()}`,
+            studentName: `Senior Citizen (${nextNum})`,
+            isWalkIn: true,
+            qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+            lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
+            status: 'WAITING',
+            issuedAt: nowIso,
+            defermentCount: 0,
+            maxDefermentsAllowed: 1,
+            isSeniorCitizen: true,
+            ticketType: 'SENIOR_CITIZEN',
+            notes: 'Priority Lane • Senior Citizen',
+          };
+          state.tickets.push(nextTicket);
+        }
+      } else {
+        const prioritySenior = waitingList.find((t) => isSeniorCitizenTicket(t));
+        if (prioritySenior) {
+          nextTicket = prioritySenior;
+        } else if (waitingList.length > 0) {
+          nextTicket = waitingList[0];
+        } else {
+          const nextNum = getNextSeqTicketNumber(state.tickets, 'C');
+          nextTicket = {
+            id: `tkt-csh-${Date.now()}`,
+            ticketNumber: nextNum,
+            officeId: 'off-cashier',
+            serviceId: 'srv-exam-period-payment',
+            studentId: `walkin-${Date.now()}`,
+            studentName: `Ticket ${nextNum}`,
+            isWalkIn: true,
+            qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+            lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
+            status: 'WAITING',
+            issuedAt: nowIso,
+            defermentCount: 0,
+            maxDefermentsAllowed: 1,
+            isSeniorCitizen: false,
+            ticketType: 'REGULAR',
+          };
+          state.tickets.push(nextTicket);
+        }
       }
 
       // 3. Mark next ticket as CALLED, and complete any prior ticket on this counter
@@ -231,6 +311,7 @@ export async function POST(req: NextRequest) {
         return c;
       });
 
+      const isSenior = isSeniorCitizenTicket(nextTicket);
       const callNotif: ActiveCallNotification = {
         id: `call-${nextTicket.id}-${Date.now()}`,
         ticketNumber: nextTicket.ticketNumber,
@@ -238,6 +319,7 @@ export async function POST(req: NextRequest) {
         studentName: nextTicket.studentName,
         calledAt: nowIso,
         isRecall: false,
+        isSeniorCitizen: isSenior,
       };
 
       state.latestCallNotification = callNotif;
@@ -268,6 +350,7 @@ export async function POST(req: NextRequest) {
       const { ticketId, counterNumber = 1 } = body;
       const tkt = state.tickets.find((t) => t.id === ticketId);
       if (tkt) {
+        const isSenior = isSeniorCitizenTicket(tkt);
         const callNotif: ActiveCallNotification = {
           id: `recall-${tkt.id}-${Date.now()}`,
           ticketNumber: tkt.ticketNumber,
@@ -275,6 +358,7 @@ export async function POST(req: NextRequest) {
           studentName: tkt.studentName,
           calledAt: nowIso,
           isRecall: true,
+          isSeniorCitizen: isSenior,
         };
         state.latestCallNotification = callNotif;
         saveState(state);
@@ -373,15 +457,18 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'ADD_TICKET') {
-      const nextNum = getNextSeqTicketNumber(state.tickets);
+      const isSenior = Boolean(body.isSeniorCitizen);
+      const prefix = isSenior ? 'S' : 'C';
+      const nextNum = getNextSeqTicketNumber(state.tickets, prefix);
+      const defaultName = isSenior ? `Senior Citizen (${nextNum})` : `Ticket ${nextNum}`;
       const newTicket: QueueTicket = {
-        id: `tkt-csh-${Date.now()}`,
+        id: `tkt-${prefix.toLowerCase()}-${Date.now()}`,
         ticketNumber: nextNum,
         officeId: 'off-cashier',
         serviceId: body.serviceId || 'srv-exam-period-payment',
-        studentId: `walkin-${Date.now()}`,
-        studentName: body.studentName || `Ticket ${nextNum}`,
-        studentNumber: body.studentNumber || '',
+        studentId: `${isSenior ? 'senior' : 'walkin'}-${Date.now()}`,
+        studentName: body.studentName || defaultName,
+        studentNumber: body.studentNumber || (isSenior ? 'SC-PRIORITY' : ''),
         isWalkIn: true,
         qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
         lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -389,6 +476,9 @@ export async function POST(req: NextRequest) {
         issuedAt: nowIso,
         defermentCount: 0,
         maxDefermentsAllowed: 1,
+        isSeniorCitizen: isSenior,
+        ticketType: isSenior ? 'SENIOR_CITIZEN' : 'REGULAR',
+        notes: isSenior ? 'Priority Lane • Senior Citizen' : undefined,
       };
       state.tickets.push(newTicket);
       saveState(state);

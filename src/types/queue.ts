@@ -3,6 +3,8 @@
 
 export type UserRole = 'student' | 'staff' | 'admin';
 
+export type TicketCategory = 'REGULAR' | 'SENIOR_CITIZEN';
+
 export type TicketStatus = 
   | 'WAITING'
   | 'NOTIFIED'
@@ -72,6 +74,8 @@ export interface QueueTicket {
   defermentReason?: string;
   defermentExpiresAt?: string;
   notes?: string;
+  ticketType?: TicketCategory;
+  isSeniorCitizen?: boolean;
 }
 
 export interface QueueEvent {

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useCashierQueue, ActiveCallNotification } from '@/context/CashierQueueContext';
+import { isSeniorCitizenTicket } from '@/lib/utils';
 import { SACLogo } from '@/components/SACLogo';
 import { CallNotificationAlert } from '@/components/CallNotificationAlert';
 import {
@@ -308,6 +309,11 @@ export default function StudentLiveTVMonitor() {
             <span className="text-base sm:text-lg font-black font-mono text-[#751A1A] leading-none">
               {servingC1 ? servingC1.ticketNumber : 'STANDBY'}
             </span>
+            {servingC1 && isSeniorCitizenTicket(servingC1) && (
+              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-md uppercase">
+                🧓 SENIOR
+              </span>
+            )}
             {servingC1 && (
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Window 1 Active" />
             )}
@@ -319,6 +325,11 @@ export default function StudentLiveTVMonitor() {
             <span className="text-base sm:text-lg font-black font-mono text-[#751A1A] leading-none">
               {servingC2 ? servingC2.ticketNumber : 'STANDBY'}
             </span>
+            {servingC2 && isSeniorCitizenTicket(servingC2) && (
+              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-md uppercase">
+                🧓 SENIOR
+              </span>
+            )}
             {servingC2 && (
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Window 2 Active" />
             )}
@@ -359,9 +370,16 @@ export default function StudentLiveTVMonitor() {
             </div>
 
             <div className="my-auto py-5 sm:py-8">
-              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#EA671B] font-black block mb-1 sm:mb-2">
-                NOW SERVING NUMBER
-              </span>
+              <div className="flex items-center justify-center space-x-2 mb-1 sm:mb-2">
+                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#EA671B] font-black block">
+                  NOW SERVING NUMBER
+                </span>
+                {servingC1 && isSeniorCitizenTicket(servingC1) && (
+                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
+                    🧓 Priority Lane
+                  </span>
+                )}
+              </div>
               <span className="text-6xl xs:text-7xl sm:text-8xl font-black font-mono text-[#751A1A] tracking-tight block leading-none my-2 sm:my-3">
                 {servingC1 ? servingC1.ticketNumber : 'STANDBY'}
               </span>
@@ -424,9 +442,16 @@ export default function StudentLiveTVMonitor() {
             </div>
 
             <div className="my-auto py-5 sm:py-8">
-              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#EA671B] font-black block mb-1 sm:mb-2">
-                NOW SERVING NUMBER
-              </span>
+              <div className="flex items-center justify-center space-x-2 mb-1 sm:mb-2">
+                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#EA671B] font-black block">
+                  NOW SERVING NUMBER
+                </span>
+                {servingC2 && isSeniorCitizenTicket(servingC2) && (
+                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
+                    🧓 Priority Lane
+                  </span>
+                )}
+              </div>
               <span className="text-6xl xs:text-7xl sm:text-8xl font-black font-mono text-[#751A1A] tracking-tight block leading-none my-2 sm:my-3">
                 {servingC2 ? servingC2.ticketNumber : 'STANDBY'}
               </span>
@@ -521,30 +546,50 @@ export default function StudentLiveTVMonitor() {
                       <p className="text-[11px] text-slate-400 mt-1">Cashiers are ready for new students.</p>
                     </div>
                   ) : (
-                    upNextTickets.map((tkt, idx) => (
-                      <div
-                        key={tkt.id}
-                        className="p-3 sm:p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-[#EA671B]/60 shadow-2xs flex items-center justify-between gap-2 transition-colors"
-                      >
-                        <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1">
-                          <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-[#FFF8F1] text-[#751A1A] font-black text-xs flex items-center justify-center font-mono border border-[#EA671B]/20 shrink-0">
-                            {idx + 1}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xl sm:text-2xl font-black font-mono text-[#751A1A] tracking-wide block leading-none">
-                              {tkt.ticketNumber}
+                    upNextTickets.map((tkt, idx) => {
+                      const isSenior = isSeniorCitizenTicket(tkt);
+                      return (
+                        <div
+                          key={tkt.id}
+                          className={`p-3 sm:p-3.5 rounded-2xl bg-white border shadow-2xs flex items-center justify-between gap-2 transition-colors ${
+                            isSenior ? 'border-[#EA671B]/60 bg-[#FFF8F1]/40' : 'border-slate-200 hover:border-[#EA671B]/60'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1">
+                            <span className={`w-6 h-6 sm:w-7 sm:h-7 rounded-xl font-black text-xs flex items-center justify-center font-mono border shrink-0 ${
+                              isSenior
+                                ? 'bg-[#EA671B] text-white border-[#EA671B]'
+                                : 'bg-[#FFF8F1] text-[#751A1A] border-[#EA671B]/20'
+                            }`}>
+                              {idx + 1}
                             </span>
-                            <span className="text-[10px] sm:text-[11px] text-slate-600 font-semibold truncate block max-w-full sm:max-w-[130px] mt-0.5">
-                              {tkt.studentName}
-                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center space-x-1.5">
+                                <span className="text-xl sm:text-2xl font-black font-mono text-[#751A1A] tracking-wide block leading-none">
+                                  {tkt.ticketNumber}
+                                </span>
+                                {isSenior && (
+                                  <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-full uppercase">
+                                    🧓 Priority
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] sm:text-[11px] text-slate-600 font-semibold truncate block max-w-full sm:max-w-[130px] mt-0.5">
+                                {tkt.studentName}
+                              </span>
+                            </div>
                           </div>
-                        </div>
 
-                        <span className="text-[11px] sm:text-xs font-bold text-[#EA671B] bg-[#FFF8F1] px-2.5 py-1 rounded-lg border border-[#EA671B]/30 shrink-0">
-                          Standby
-                        </span>
-                      </div>
-                    ))
+                          <span className={`text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg border shrink-0 ${
+                            isSenior
+                              ? 'bg-[#751A1A] text-white border-[#751A1A]'
+                              : 'text-[#EA671B] bg-[#FFF8F1] border-[#EA671B]/30'
+                          }`}>
+                            {isSenior ? 'Priority' : 'Standby'}
+                          </span>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -565,6 +610,7 @@ export default function StudentLiveTVMonitor() {
                   ) : (
                     recentlyCalledTickets.map((tkt) => {
                       const isNowIn = tkt.status === 'CALLED' || tkt.status === 'SERVING';
+                      const isSenior = isSeniorCitizenTicket(tkt);
                       return (
                         <div
                           key={tkt.id}
@@ -579,9 +625,16 @@ export default function StudentLiveTVMonitor() {
                               {tkt.ticketNumber}
                             </span>
                             <div className="min-w-0">
-                              <span className="text-xs font-bold text-slate-800 block truncate">
-                                Window {tkt.assignedCounterNumber || 1}
-                              </span>
+                              <div className="flex items-center space-x-1.5">
+                                <span className="text-xs font-bold text-slate-800 block truncate">
+                                  Window {tkt.assignedCounterNumber || 1}
+                                </span>
+                                {isSenior && (
+                                  <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded uppercase">
+                                    🧓 Senior
+                                  </span>
+                                )}
+                              </div>
                               <span className="text-[10px] text-slate-500 block">
                                 {formatTimeAgo(tkt.calledAt)}
                               </span>

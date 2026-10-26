@@ -6,6 +6,7 @@ export interface CallNotificationPayload {
   windowNumber: 1 | 2;
   studentName?: string;
   isRecall?: boolean;
+  isSeniorCitizen?: boolean;
 }
 
 /**
@@ -82,8 +83,10 @@ export function speakQueueCall(payload: CallNotificationPayload) {
   try {
     window.speechSynthesis.cancel();
     const formattedTicket = payload.ticketNumber.split('').join(' ');
+    const isSenior = payload.isSeniorCitizen || payload.ticketNumber.startsWith('S-');
+    const typeLabel = isSenior ? 'Senior Citizen ticket number' : 'ticket number';
     const prefix = payload.isRecall ? 'Attention please, recalling' : 'Now calling';
-    const text = `${prefix} ticket number ${formattedTicket}, please proceed to Cashier Window ${payload.windowNumber}.`;
+    const text = `${prefix} ${typeLabel} ${formattedTicket}, please proceed to Cashier Window ${payload.windowNumber}.`;
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.92;
@@ -147,12 +150,17 @@ export function sendBrowserNotification(
   if (Notification.permission !== 'granted') return;
 
   try {
+    const isSenior = payload.isSeniorCitizen || payload.ticketNumber.startsWith('S-');
     const title = payload.ticketNumber === 'SYSTEM' 
       ? 'SAC Cashier Notifications Active' 
-      : `🔔 NOW IN: Ticket ${payload.ticketNumber}`;
+      : isSenior
+        ? `🧓 SENIOR CITIZEN: Ticket ${payload.ticketNumber}`
+        : `🔔 NOW IN: Ticket ${payload.ticketNumber}`;
 
     const body = customBody || 
-      `Ticket ${payload.ticketNumber} is now being called to Cashier Window ${payload.windowNumber}. Please proceed promptly!`;
+      (isSenior
+        ? `Senior Citizen ticket ${payload.ticketNumber} is now being called to Cashier Window ${payload.windowNumber} (Priority Lane). Please proceed promptly!`
+        : `Ticket ${payload.ticketNumber} is now being called to Cashier Window ${payload.windowNumber}. Please proceed promptly!`);
 
     // Try standard notification first
     new Notification(title, {

@@ -15,7 +15,7 @@ import {
   INITIAL_CASHIER_TICKETS, 
   CASHIER_ANNOUNCEMENTS 
 } from '@/lib/cashier-data';
-import { generateLookupCode, generateQRToken, getNextSeqTicketNumber, formatTicketNumber } from '@/lib/utils';
+import { generateLookupCode, generateQRToken, getNextSeqTicketNumber, formatTicketNumber, isSeniorCitizenTicket } from '@/lib/utils';
 
 export interface ToastMessage {
   id: string;
@@ -31,6 +31,7 @@ export interface ActiveCallNotification {
   studentName?: string;
   calledAt: string;
   isRecall?: boolean;
+  isSeniorCitizen?: boolean;
 }
 
 export interface CashierAuthUser {
@@ -56,11 +57,12 @@ interface CashierContextType {
   announcements: CampusAnnouncement[];
 
   // Cashier Operations (Only Cashier 1 & 2 can perform)
-  callNextTicket: (counterNumber: 1 | 2) => QueueTicket;
+  callNextTicket: (counterNumber: 1 | 2, preference?: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN') => QueueTicket;
+  callSeniorCitizenTicket: (counterNumber: 1 | 2) => QueueTicket;
   recallTicket: (ticketId: string) => void;
   startServing: (ticketId: string) => void;
   completeServing: (ticketId: string) => void;
-  completeAndCallNext: (ticketId: string, counterNumber: 1 | 2) => QueueTicket;
+  completeAndCallNext: (ticketId: string, counterNumber: 1 | 2, preference?: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN') => QueueTicket;
   skipTicket: (ticketId: string) => void;
   skipAndCallNext: (ticketId: string, counterNumber: 1 | 2) => QueueTicket;
   markNoShow: (ticketId: string) => void;
@@ -71,7 +73,8 @@ interface CashierContextType {
     studentNo?: string, 
     amount?: string,
     yearCourse?: string,
-    transactionLabel?: string
+    transactionLabel?: string,
+    isSeniorCitizen?: boolean
   ) => QueueTicket;
 
   // Live Displays
@@ -317,7 +320,8 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   };
 
   // 3. Cashier Calls Next Ticket (NEVER FAILS: Auto-generates next if queue is empty)
-  const callNextTicket = (counterNumber: 1 | 2): QueueTicket => {
+  // Supports Priority Lane for Senior Citizens (S-001 to S-1000)
+  const callNextTicket = (counterNumber: 1 | 2, preference: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN' = 'ANY'): QueueTicket => {
     const counter = counters.find(c => c.counterNumber === counterNumber);
     const nowIso = new Date().toISOString();
 
@@ -329,29 +333,65 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     let nextTicket: QueueTicket;
     let baseTickets = [...tickets];
 
-    if (waitingTickets.length > 0) {
-      nextTicket = waitingTickets[0];
+    if (preference === 'SENIOR_CITIZEN') {
+      const waitingSenior = waitingTickets.find(t => isSeniorCitizenTicket(t));
+      if (waitingSenior) {
+        nextTicket = waitingSenior;
+      } else {
+        // Auto-generate the next sequential Senior Citizen number
+        const nextNum = getNextSeqTicketNumber(tickets, 'S');
+        nextTicket = {
+          id: `tkt-senior-${Date.now()}`,
+          ticketNumber: nextNum,
+          officeId: 'off-cashier',
+          serviceId: 'srv-exam-period-payment',
+          studentId: `senior-${Date.now()}`,
+          studentName: `Senior Citizen (${nextNum})`,
+          isWalkIn: true,
+          qrToken: generateQRToken(nextNum),
+          lookupCode: generateLookupCode(nextNum),
+          status: 'WAITING',
+          issuedAt: nowIso,
+          defermentCount: 0,
+          maxDefermentsAllowed: 1,
+          isSeniorCitizen: true,
+          ticketType: 'SENIOR_CITIZEN',
+          notes: 'Priority Lane • Senior Citizen',
+        };
+        baseTickets.push(nextTicket);
+      }
     } else {
-      // Auto-generate the next sequential number so the cashier is NEVER blocked
-      const nextNum = getNextSeqTicketNumber(tickets);
-      nextTicket = {
-        id: `tkt-csh-${Date.now()}`,
-        ticketNumber: nextNum,
-        officeId: 'off-cashier',
-        serviceId: 'srv-exam-period-payment',
-        studentId: `walkin-${Date.now()}`,
-        studentName: `Ticket ${nextNum}`,
-        isWalkIn: true,
-        qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-        lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
-        status: 'WAITING',
-        issuedAt: nowIso,
-        defermentCount: 0,
-        maxDefermentsAllowed: 1,
-      };
-      baseTickets.push(nextTicket);
+      // General calling: If there is a waiting Senior Citizen, prioritize them (Priority Lane)
+      const prioritySenior = waitingTickets.find(t => isSeniorCitizenTicket(t));
+      if (prioritySenior) {
+        nextTicket = prioritySenior;
+      } else if (waitingTickets.length > 0) {
+        nextTicket = waitingTickets[0];
+      } else {
+        // Auto-generate the next sequential regular number so the cashier is NEVER blocked
+        const nextNum = getNextSeqTicketNumber(tickets, 'C');
+        nextTicket = {
+          id: `tkt-csh-${Date.now()}`,
+          ticketNumber: nextNum,
+          officeId: 'off-cashier',
+          serviceId: 'srv-exam-period-payment',
+          studentId: `walkin-${Date.now()}`,
+          studentName: `Ticket ${nextNum}`,
+          isWalkIn: true,
+          qrToken: generateQRToken(nextNum),
+          lookupCode: generateLookupCode(nextNum),
+          status: 'WAITING',
+          issuedAt: nowIso,
+          defermentCount: 0,
+          maxDefermentsAllowed: 1,
+          isSeniorCitizen: false,
+          ticketType: 'REGULAR',
+        };
+        baseTickets.push(nextTicket);
+      }
     }
 
+    const isSenior = isSeniorCitizenTicket(nextTicket);
     const callNotif: ActiveCallNotification = {
       id: `call-${nextTicket.id}-${Date.now()}`,
       ticketNumber: nextTicket.ticketNumber,
@@ -359,6 +399,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       studentName: nextTicket.studentName,
       calledAt: nowIso,
       isRecall: false,
+      isSeniorCitizen: isSenior,
     };
 
     const updatedTickets = baseTickets.map(t => {
@@ -402,15 +443,33 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     fetch('/api/queue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'CALL_NEXT', counterNumber }),
+      body: JSON.stringify({ 
+        action: 'CALL_NEXT', 
+        counterNumber,
+        isSeniorCitizen: isSenior,
+        preference 
+      }),
     }).catch(() => {});
 
-    showToast('Now Calling', `Ticket ${nextTicket.ticketNumber} called to Cashier Window ${counterNumber}!`, 'success');
+    showToast(
+      isSenior ? '🧓 Priority Lane Called' : 'Now Calling',
+      `Ticket ${nextTicket.ticketNumber}${isSenior ? ' (Senior Citizen)' : ''} called to Cashier Window ${counterNumber}!`, 
+      'success'
+    );
     return nextTicket;
   };
 
+  // Dedicated action: Call Senior Citizen (Priority Lane)
+  const callSeniorCitizenTicket = (counterNumber: 1 | 2): QueueTicket => {
+    return callNextTicket(counterNumber, 'SENIOR_CITIZEN');
+  };
+
   // 3b. Complete Current Ticket AND Immediately Call Next Student
-  const completeAndCallNext = (ticketId: string, counterNumber: 1 | 2): QueueTicket => {
+  const completeAndCallNext = (
+    ticketId: string, 
+    counterNumber: 1 | 2,
+    preference: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN' = 'ANY'
+  ): QueueTicket => {
     const counter = counters.find(c => c.counterNumber === counterNumber);
     const nowIso = new Date().toISOString();
 
@@ -430,28 +489,63 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     let nextTicket: QueueTicket;
     let baseList = [...completedList];
 
-    if (waitingTickets.length > 0) {
-      nextTicket = waitingTickets[0];
+    if (preference === 'SENIOR_CITIZEN') {
+      const waitingSenior = waitingTickets.find(t => isSeniorCitizenTicket(t));
+      if (waitingSenior) {
+        nextTicket = waitingSenior;
+      } else {
+        const nextNum = getNextSeqTicketNumber(completedList, 'S');
+        nextTicket = {
+          id: `tkt-senior-${Date.now()}`,
+          ticketNumber: nextNum,
+          officeId: 'off-cashier',
+          serviceId: 'srv-exam-period-payment',
+          studentId: `senior-${Date.now()}`,
+          studentName: `Senior Citizen (${nextNum})`,
+          isWalkIn: true,
+          qrToken: generateQRToken(nextNum),
+          lookupCode: generateLookupCode(nextNum),
+          status: 'WAITING',
+          issuedAt: nowIso,
+          defermentCount: 0,
+          maxDefermentsAllowed: 1,
+          isSeniorCitizen: true,
+          ticketType: 'SENIOR_CITIZEN',
+          notes: 'Priority Lane • Senior Citizen',
+        };
+        baseList.push(nextTicket);
+      }
     } else {
-      const nextNum = getNextSeqTicketNumber(completedList);
-      nextTicket = {
-        id: `tkt-csh-${Date.now()}`,
-        ticketNumber: nextNum,
-        officeId: 'off-cashier',
-        serviceId: 'srv-exam-period-payment',
-        studentId: `walkin-${Date.now()}`,
-        studentName: `Ticket ${nextNum}`,
-        isWalkIn: true,
-        qrToken: `SAC-PASS-${nextNum}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-        lookupCode: `${nextNum}-${Math.floor(1000 + Math.random() * 9000)}`,
-        status: 'WAITING',
-        issuedAt: nowIso,
-        defermentCount: 0,
-        maxDefermentsAllowed: 1,
-      };
-      baseList.push(nextTicket);
+      // General calling: prioritize waiting Senior Citizens first
+      const prioritySenior = waitingTickets.find(t => isSeniorCitizenTicket(t));
+      if (prioritySenior) {
+        nextTicket = prioritySenior;
+      } else if (waitingTickets.length > 0) {
+        nextTicket = waitingTickets[0];
+      } else {
+        const nextNum = getNextSeqTicketNumber(completedList, 'C');
+        nextTicket = {
+          id: `tkt-csh-${Date.now()}`,
+          ticketNumber: nextNum,
+          officeId: 'off-cashier',
+          serviceId: 'srv-exam-period-payment',
+          studentId: `walkin-${Date.now()}`,
+          studentName: `Ticket ${nextNum}`,
+          isWalkIn: true,
+          qrToken: generateQRToken(nextNum),
+          lookupCode: generateLookupCode(nextNum),
+          status: 'WAITING',
+          issuedAt: nowIso,
+          defermentCount: 0,
+          maxDefermentsAllowed: 1,
+          isSeniorCitizen: false,
+          ticketType: 'REGULAR',
+        };
+        baseList.push(nextTicket);
+      }
     }
 
+    const isSenior = isSeniorCitizenTicket(nextTicket);
     const callNotif: ActiveCallNotification = {
       id: `call-${nextTicket.id}-${Date.now()}`,
       ticketNumber: nextTicket.ticketNumber,
@@ -459,6 +553,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       studentName: nextTicket.studentName,
       calledAt: nowIso,
       isRecall: false,
+      isSeniorCitizen: isSenior,
     };
 
     const finalTickets = baseList.map(t => {
@@ -502,10 +597,20 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     fetch('/api/queue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'COMPLETE_AND_CALL_NEXT', ticketId, counterNumber }),
+      body: JSON.stringify({ 
+        action: 'COMPLETE_AND_CALL_NEXT', 
+        ticketId, 
+        counterNumber, 
+        isSeniorCitizen: isSenior,
+        preference 
+      }),
     }).catch(() => {});
 
-    showToast('Served & Called Next', `Ticket ${nextTicket.ticketNumber} summoned to Window ${counterNumber}!`, 'success');
+    showToast(
+      isSenior ? 'Served & Called Priority' : 'Served & Called Next',
+      `Ticket ${nextTicket.ticketNumber}${isSenior ? ' (Senior Citizen)' : ''} summoned to Window ${counterNumber}!`, 
+      'success'
+    );
     return nextTicket;
   };
 
@@ -513,6 +618,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     const tkt = tickets.find(t => t.id === ticketId);
     if (!tkt) return;
     const windowNum = (tkt.assignedCounterNumber || 1) as 1 | 2;
+    const isSenior = isSeniorCitizenTicket(tkt);
     const callNotif: ActiveCallNotification = {
       id: `recall-${tkt.id}-${Date.now()}`,
       ticketNumber: tkt.ticketNumber,
@@ -520,6 +626,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       studentName: tkt.studentName,
       calledAt: new Date().toISOString(),
       isRecall: true,
+      isSeniorCitizen: isSenior,
     };
     setLatestCallNotification(callNotif);
     broadcastSync(tickets, counters, callNotif);
@@ -629,27 +736,32 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   // 4. Print New Physical Queue Slip (Form FO 07 Compliant)
   const printNewTicket = (
     serviceId: string, 
-    studentName = 'Student Guest', 
+    studentName = '', 
     studentNo = '', 
     amount = '',
     yearCourse = '',
-    transactionLabel = ''
+    transactionLabel = '',
+    isSeniorCitizen = false
   ) => {
-    const formattedNum = getNextSeqTicketNumber(tickets);
+    const prefix = isSeniorCitizen ? 'S' : 'C';
+    const formattedNum = getNextSeqTicketNumber(tickets, prefix);
 
     const noteDetails = [
+      isSeniorCitizen ? '🧓 Priority Lane (Senior Citizen)' : '',
       transactionLabel ? `Type: ${transactionLabel}` : '',
       yearCourse ? `Course/Yr: ${yearCourse}` : '',
       amount ? `Amount: ₱${amount}` : '',
     ].filter(Boolean).join(' | ');
 
+    const defaultName = isSeniorCitizen ? `Senior Citizen (${formattedNum})` : `Student (${formattedNum})`;
+
     const newTicket: QueueTicket = {
-      id: `tkt-csh-${Date.now()}`,
+      id: `tkt-${prefix.toLowerCase()}-${Date.now()}`,
       ticketNumber: formattedNum,
       officeId: 'off-cashier',
       serviceId,
-      studentId: `walkin-${Date.now()}`,
-      studentName: studentName || `Student (${formattedNum})`,
+      studentId: `${isSeniorCitizen ? 'senior' : 'walkin'}-${Date.now()}`,
+      studentName: studentName || defaultName,
       studentNumber: studentNo,
       isWalkIn: true,
       qrToken: generateQRToken(formattedNum),
@@ -658,13 +770,33 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       issuedAt: new Date().toISOString(),
       defermentCount: 0,
       maxDefermentsAllowed: 1,
+      isSeniorCitizen,
+      ticketType: isSeniorCitizen ? 'SENIOR_CITIZEN' : 'REGULAR',
       notes: noteDetails || undefined,
     };
 
     const updated = [...tickets, newTicket];
     setTickets(updated);
     broadcastSync(updated);
-    showToast('Printed Slip Generated', `Queue Number: ${newTicket.ticketNumber}. Student may monitor the campus TV display.`, 'success');
+
+    // Sync to Server API
+    fetch('/api/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        action: 'ADD_TICKET', 
+        isSeniorCitizen, 
+        serviceId, 
+        studentName: newTicket.studentName,
+        studentNumber: studentNo 
+      }),
+    }).catch(() => {});
+
+    showToast(
+      isSeniorCitizen ? '🧓 Senior Citizen Slip' : 'Printed Slip Generated',
+      `Queue Number: ${newTicket.ticketNumber}${isSeniorCitizen ? ' (Priority Lane)' : ''}. Please monitor the campus TV display.`,
+      'success'
+    );
 
     return newTicket;
   };
@@ -705,6 +837,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
         tickets,
         announcements,
         callNextTicket,
+        callSeniorCitizenTicket,
         recallTicket,
         startServing,
         completeServing,

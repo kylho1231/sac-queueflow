@@ -44,15 +44,19 @@ export function CallNotificationAlert({
 
   if (!notification) return null;
 
+  const isSenior = notification.isSeniorCitizen || notification.ticketNumber.startsWith('S-');
+
   return (
     <div
       role="alert"
       aria-live="assertive"
       className="fixed top-3 sm:top-5 left-1/2 -translate-x-1/2 z-50 w-[95%] sm:w-[90%] max-w-2xl animate-in fade-in slide-in-from-top-6 duration-300 pointer-events-auto"
     >
-      <div className="bg-white rounded-3xl border-3 border-[#EA671B] shadow-2xl shadow-amber-950/20 overflow-hidden relative">
+      <div className={`bg-white rounded-3xl border-3 shadow-2xl shadow-amber-950/20 overflow-hidden relative ${
+        isSenior ? 'border-[#EA671B] ring-4 ring-[#EA671B]/20' : 'border-[#EA671B]'
+      }`}>
         {/* Top Accent Strip */}
-        <div className="bg-[#751A1A] px-4 sm:px-6 py-2.5 flex items-center justify-between text-white">
+        <div className={`${isSenior ? 'bg-[#5A1212]' : 'bg-[#751A1A]'} px-4 sm:px-6 py-2.5 flex items-center justify-between text-white`}>
           <div className="flex items-center space-x-2">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EA671B] opacity-75"></span>
@@ -60,7 +64,9 @@ export function CallNotificationAlert({
             </span>
             <BellRing className="w-4 h-4 text-[#EA671B] animate-bounce" />
             <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-[#FFF8F1]">
-              {notification.isRecall ? 'ATTENTION: TICKET RECALLED' : 'NOW CALLING NUMBER IN QUEUE'}
+              {isSenior
+                ? (notification.isRecall ? '🧓 ATTENTION: SENIOR CITIZEN RECALLED' : '🧓 SENIOR CITIZEN PRIORITY CALL')
+                : (notification.isRecall ? 'ATTENTION: TICKET RECALLED' : 'NOW CALLING NUMBER IN QUEUE')}
             </span>
           </div>
 
@@ -77,9 +83,16 @@ export function CallNotificationAlert({
         <div className="p-4 sm:p-6 bg-gradient-to-b from-[#FFF8F1] via-white to-white flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Giant Number Callout */}
           <div className="text-center sm:text-left flex-1 min-w-0">
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#EA671B] block">
-              ASSIGNED NUMBER IS NOW IN:
-            </span>
+            <div className="flex items-center space-x-2 justify-center sm:justify-start">
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#EA671B] block">
+                ASSIGNED NUMBER IS NOW IN:
+              </span>
+              {isSenior && (
+                <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Priority Lane
+                </span>
+              )}
+            </div>
             <div className="text-5xl sm:text-6xl md:text-7xl font-mono font-black text-[#751A1A] tracking-tight leading-none my-1">
               {notification.ticketNumber}
             </div>

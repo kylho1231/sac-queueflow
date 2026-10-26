@@ -7,6 +7,7 @@ import { SACLogo } from '@/components/SACLogo';
 import { ToastContainer } from '@/components/ToastContainer';
 import { CallNotificationAlert } from '@/components/CallNotificationAlert';
 import { playFullAudioCall } from '@/lib/notifications';
+import { isSeniorCitizenTicket } from '@/lib/utils';
 import { 
   KeyRound, 
   Mail, 
@@ -25,7 +26,8 @@ import {
   Send,
   PlusCircle,
   Users,
-  Radio
+  Radio,
+  HeartHandshake
 } from 'lucide-react';
 
 function CashierTerminalContent() {
@@ -36,6 +38,7 @@ function CashierTerminalContent() {
     logoutCashier,
     lastGeneratedOtp,
     callNextTicket,
+    callSeniorCitizenTicket,
     recallTicket,
     startServing,
     completeServing,
@@ -73,6 +76,8 @@ function CashierTerminalContent() {
   const waitingTickets = tickets
     .filter(t => t.status === 'WAITING')
     .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime());
+
+  const waitingSeniorsCount = waitingTickets.filter(t => isSeniorCitizenTicket(t)).length;
 
   // Timer effect
   useEffect(() => {
@@ -127,9 +132,17 @@ function CashierTerminalContent() {
     }, 400);
   };
 
-  // Call Next Ticket Handler
+  // Call Next Ticket Handler (General Queue)
   const handleCallNext = () => {
     const called = callNextTicket(activeCounterNum);
+    if (called) {
+      announceTicket(called.ticketNumber, activeCounterNum);
+    }
+  };
+
+  // Call Senior Citizen Priority Handler (Dedicated Priority Lane)
+  const handleCallSeniorCitizen = () => {
+    const called = callSeniorCitizenTicket(activeCounterNum);
     if (called) {
       announceTicket(called.ticketNumber, activeCounterNum);
     }
@@ -175,9 +188,14 @@ function CashierTerminalContent() {
     }
   };
 
-  // Quick Issue Next Sequential Ticket
+  // Quick Issue Next Regular Ticket (C-xxx)
   const handleQuickAddTicket = () => {
-    printNewTicket('srv-exam-period-payment', 'Student Guest');
+    printNewTicket('srv-exam-period-payment', 'Student Guest', '', '', '', '', false);
+  };
+
+  // Quick Issue Next Senior Citizen Ticket (S-xxx Priority Lane)
+  const handleQuickAddSeniorTicket = () => {
+    printNewTicket('srv-exam-period-payment', '', '', '', '', '', true);
   };
 
   // -------------------------------------------------------------
@@ -468,9 +486,16 @@ function CashierTerminalContent() {
 
             {/* Giant Active Ticket Display */}
             <div className="my-6 text-center py-8 sm:py-10 bg-[#FFF8F1]/60 rounded-2xl border border-[#EA671B]/20 shadow-inner">
-              <span className="text-xs uppercase tracking-widest text-[#EA671B] font-black block mb-1">
-                CURRENT TICKET ASSIGNED
-              </span>
+              <div className="flex items-center justify-center space-x-2 mb-1">
+                <span className="text-xs uppercase tracking-widest text-[#EA671B] font-black block">
+                  CURRENT TICKET ASSIGNED
+                </span>
+                {currentTicket && isSeniorCitizenTicket(currentTicket) && (
+                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
+                    🧓 Senior Citizen
+                  </span>
+                )}
+              </div>
               <span className="text-6xl xs:text-7xl sm:text-8xl font-black font-mono text-[#751A1A] tracking-tight block leading-none my-2">
                 {currentTicket ? currentTicket.ticketNumber : '---'}
               </span>
@@ -487,28 +512,46 @@ function CashierTerminalContent() {
                 </div>
               ) : (
                 <p className="text-xs text-slate-400 mt-2">
-                  No ticket currently called. Tap &quot;Call Next Student&quot; to summon the next in line.
+                  No ticket currently called. Tap &quot;Call Next Student&quot; or &quot;Call Senior 🧓&quot; to summon.
                 </p>
               )}
             </div>
 
             {/* Primary Action Call Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               {/* Call Next Button (Always Active - Auto-generates next number if queue is empty) */}
               <button
                 type="button"
                 onClick={handleCallNext}
-                className="w-full min-h-[56px] bg-[#751A1A] hover:bg-[#5A1212] text-white font-black py-3.5 px-5 rounded-2xl shadow-md hover:shadow-lg transition-all flex flex-col items-center justify-center cursor-pointer text-sm sm:text-base border border-[#EA671B]/30"
-                title="Call next student in queue or auto-issue next number"
+                className="w-full min-h-[58px] bg-[#751A1A] hover:bg-[#5A1212] text-white font-black py-3 px-3.5 rounded-2xl shadow-md hover:shadow-lg transition-all flex flex-col items-center justify-center cursor-pointer text-xs sm:text-sm border border-[#EA671B]/30"
+                title="Call next student in queue (auto-prioritizes senior citizens if waiting)"
               >
-                <div className="flex items-center space-x-2">
-                  <PhoneCall className="w-5 h-5 text-[#EA671B]" />
-                  <span>Call Next Student</span>
+                <div className="flex items-center space-x-1.5">
+                  <PhoneCall className="w-4 h-4 text-[#EA671B]" />
+                  <span>Call Next</span>
                 </div>
-                <span className="text-[11px] font-normal text-amber-200/90 mt-0.5">
+                <span className="text-[10px] font-normal text-amber-200/90 mt-0.5 text-center leading-tight">
                   {waitingTickets.length > 0 
-                    ? `(${waitingTickets.length} waiting in line)` 
-                    : '(Queue empty • Auto-summons next number)'}
+                    ? `(${waitingTickets.length} waiting)` 
+                    : '(Auto-issues C)'}
+                </span>
+              </button>
+
+              {/* Call Senior Citizen Button (Priority Lane) */}
+              <button
+                type="button"
+                onClick={handleCallSeniorCitizen}
+                className="w-full min-h-[58px] bg-gradient-to-br from-[#EA671B] to-[#D95B11] hover:from-[#D95B11] hover:to-[#B84705] text-white font-black py-3 px-3.5 rounded-2xl shadow-md hover:shadow-lg transition-all flex flex-col items-center justify-center cursor-pointer text-xs sm:text-sm border border-amber-300"
+                title="Call next Senior Citizen ticket (S-xxx) from Priority Lane"
+              >
+                <div className="flex items-center space-x-1.5">
+                  <HeartHandshake className="w-4 h-4 text-amber-100" />
+                  <span>Call Senior 🧓</span>
+                </div>
+                <span className="text-[10px] font-normal text-amber-100 mt-0.5 text-center leading-tight">
+                  {waitingSeniorsCount > 0 
+                    ? `(${waitingSeniorsCount} waiting • Priority)` 
+                    : '(Auto-issues S)'}
                 </span>
               </button>
 
@@ -517,15 +560,15 @@ function CashierTerminalContent() {
                 type="button"
                 onClick={handleRecall}
                 disabled={!currentTicket}
-                className="w-full min-h-[56px] bg-[#EA671B] hover:bg-[#D95B11] text-white font-bold py-3.5 px-5 rounded-2xl shadow-xs hover:shadow-md transition-all flex flex-col items-center justify-center cursor-pointer disabled:opacity-40 text-sm sm:text-base"
+                className="w-full min-h-[58px] bg-white hover:bg-[#FFF8F1] text-[#751A1A] font-bold py-3 px-3.5 rounded-2xl shadow-xs hover:shadow-md transition-all flex flex-col items-center justify-center cursor-pointer disabled:opacity-40 text-xs sm:text-sm border-2 border-[#EA671B]/30 hover:border-[#EA671B]"
                 title="Repeat voice chime and audio callout"
               >
-                <div className="flex items-center space-x-2">
-                  <Volume2 className="w-5 h-5" />
-                  <span>Recall Ticket (Audio)</span>
+                <div className="flex items-center space-x-1.5">
+                  <Volume2 className="w-4 h-4 text-[#EA671B]" />
+                  <span>Recall Audio</span>
                 </div>
-                <span className="text-[11px] font-normal text-white/80 mt-0.5">
-                  {currentTicket ? `Re-announce ${currentTicket.ticketNumber}` : 'Window Idle'}
+                <span className="text-[10px] font-normal text-slate-500 mt-0.5 text-center leading-tight">
+                  {currentTicket ? `Replay ${currentTicket.ticketNumber}` : 'Window Idle'}
                 </span>
               </button>
             </div>
@@ -602,55 +645,97 @@ function CashierTerminalContent() {
               </div>
 
               {/* Quick sequence number dispenser */}
-              <button
-                type="button"
-                onClick={handleQuickAddTicket}
-                className="bg-[#FFF8F1] hover:bg-white text-[#751A1A] border border-[#EA671B]/30 hover:border-[#EA671B] text-xs font-bold px-2.5 py-1 rounded-xl transition-all flex items-center space-x-1 cursor-pointer shadow-2xs"
-                title="Add next sequential ticket number to queue"
-              >
-                <PlusCircle className="w-3.5 h-3.5 text-[#EA671B]" />
-                <span>+ Add Number</span>
-              </button>
+              <div className="flex items-center space-x-1.5 flex-wrap gap-1">
+                <button
+                  type="button"
+                  onClick={handleQuickAddTicket}
+                  className="bg-[#FFF8F1] hover:bg-white text-[#751A1A] border border-[#EA671B]/30 hover:border-[#EA671B] text-[11px] sm:text-xs font-bold px-2 py-1 rounded-xl transition-all flex items-center space-x-1 cursor-pointer shadow-2xs"
+                  title="Add next regular ticket (C-xxx) to queue"
+                >
+                  <PlusCircle className="w-3.5 h-3.5 text-[#EA671B]" />
+                  <span>+ Regular (C)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleQuickAddSeniorTicket}
+                  className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-[11px] sm:text-xs font-bold px-2 py-1 rounded-xl transition-all flex items-center space-x-1 cursor-pointer shadow-2xs"
+                  title="Add next Senior Citizen ticket (S-xxx) to priority queue"
+                >
+                  <HeartHandshake className="w-3.5 h-3.5 text-amber-700" />
+                  <span>+ Senior 🧓 (S)</span>
+                </button>
+              </div>
             </div>
 
             <p className="text-[11px] text-slate-500 mt-2">
-              Tickets waiting to be called. Numbers are summoned in FIFO order.
+              Tickets waiting to be called. Priority lane senior citizens (S-xxx) are summoned first.
             </p>
 
             <div className="mt-3 divide-y divide-slate-100 max-h-96 overflow-y-auto">
               {waitingTickets.length === 0 ? (
                 <div className="py-12 text-center text-xs text-slate-400">
                   <p>Queue is currently clear.</p>
-                  <button
-                    type="button"
-                    onClick={handleQuickAddTicket}
-                    className="mt-3 text-[#EA671B] font-bold text-xs underline cursor-pointer"
-                  >
-                    + Generate next queue ticket
-                  </button>
+                  <div className="flex items-center justify-center space-x-3 mt-3">
+                    <button
+                      type="button"
+                      onClick={handleQuickAddTicket}
+                      className="text-[#EA671B] font-bold text-xs underline cursor-pointer"
+                    >
+                      + Regular Ticket (C)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleQuickAddSeniorTicket}
+                      className="text-amber-700 font-bold text-xs underline cursor-pointer"
+                    >
+                      + Senior Citizen (S)
+                    </button>
+                  </div>
                 </div>
               ) : (
-                waitingTickets.map((t, idx) => (
-                  <div key={t.id} className="py-3 flex items-center justify-between gap-2">
-                    <div className="flex items-center space-x-3 min-w-0">
-                      <span className="w-6 h-6 rounded-lg bg-[#FFF8F1] text-[#751A1A] font-black text-xs flex items-center justify-center font-mono border border-[#EA671B]/25 shrink-0">
-                        {idx + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <span className="text-base font-black font-mono text-[#751A1A] block leading-none">
-                          {t.ticketNumber}
+                waitingTickets.map((t, idx) => {
+                  const isSenior = isSeniorCitizenTicket(t);
+                  return (
+                    <div 
+                      key={t.id} 
+                      className={`py-3 flex items-center justify-between gap-2 ${
+                        isSenior ? 'bg-amber-50/70 px-2.5 rounded-xl border border-amber-300/70 my-1' : ''
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center font-mono border shrink-0 ${
+                          isSenior 
+                            ? 'bg-[#EA671B] text-white border-[#EA671B]' 
+                            : 'bg-[#FFF8F1] text-[#751A1A] border-[#EA671B]/25'
+                        }`}>
+                          {idx + 1}
                         </span>
-                        <span className="text-xs text-slate-500 truncate block mt-0.5">
-                          {t.studentName}
-                        </span>
+                        <div className="min-w-0">
+                          <div className="flex items-center space-x-1.5">
+                            <span className="text-base font-black font-mono text-[#751A1A] block leading-none">
+                              {t.ticketNumber}
+                            </span>
+                            {isSenior && (
+                              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-full uppercase">
+                                🧓 Priority
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-slate-500 truncate block mt-0.5">
+                            {t.studentName}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    <span className="text-[11px] font-mono text-slate-400 shrink-0">
-                      Waiting in lobby
-                    </span>
-                  </div>
-                ))
+                      <span className={`text-[11px] font-mono shrink-0 ${
+                        isSenior ? 'text-amber-800 font-bold' : 'text-slate-400'
+                      }`}>
+                        {isSenior ? 'Priority Lane' : 'Waiting in lobby'}
+                      </span>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
