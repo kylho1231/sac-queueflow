@@ -1,72 +1,36 @@
 'use client';
 
-import React from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { QueueProvider } from '@/context/QueueContext';
-import { NavigationHeader } from '@/components/NavigationHeader';
-import { StaffDashboard } from '@/components/StaffDashboard';
-import { ToastContainer } from '@/components/ToastContainer';
-import { ArrowLeft, ShieldCheck, Tv, UserCheck } from 'lucide-react';
+import { SACLogo } from '@/components/SACLogo';
+import { ArrowRight } from 'lucide-react';
 
-export default function StaffPortalPage() {
+export default function StaffRedirectPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Automatically redirect staff to cashier terminal
+    router.replace('/cashier');
+  }, [router]);
+
   return (
-    <QueueProvider>
-      <div className="min-h-screen bg-[#F0FDFA] text-[#134E4A] flex flex-col font-sans selection:bg-teal-200">
-        <NavigationHeader />
-
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-          {/* Staff Breadcrumb Navigation */}
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 bg-white/80 backdrop-blur-md p-3.5 rounded-2xl border border-teal-100/90 shadow-2xs">
-            <div className="flex items-center space-x-2 text-xs font-medium text-slate-700">
-              <Link 
-                href="/" 
-                className="inline-flex items-center space-x-1 text-slate-500 hover:text-teal-700 transition-colors font-semibold"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Return to Student Portal</span>
-              </Link>
-              <span className="text-slate-300">/</span>
-              <span className="text-teal-900 font-bold flex items-center space-x-1.5">
-                <UserCheck className="w-4 h-4 text-teal-600" />
-                <span>Staff Operations Portal</span>
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-2.5">
-              <Link
-                href="/admin"
-                className="bg-teal-50 hover:bg-teal-100 text-teal-900 text-xs font-semibold px-3 py-1.5 rounded-xl border border-teal-200 transition-colors flex items-center space-x-1.5 cursor-pointer"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
-                <span>Switch to Admin</span>
-              </Link>
-
-              <Link
-                href="/display"
-                className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
-              >
-                <Tv className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
-                <span>Launch TV Display</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Dedicated Staff Console */}
-          <StaffDashboard />
-
-          {/* Toast Notification Container */}
-          <ToastContainer />
-        </main>
-
-        <footer className="border-t border-teal-100/80 bg-white/90 py-6 px-4 text-xs text-slate-500 mt-12 text-center">
-          <p className="font-semibold text-slate-700">
-            SAC QueueFlow Staff Terminal &bull; Registrar & Cashier Operations
-          </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            Authorized Personnel Access &bull; St. Anthony&apos;s College, Antique
-          </p>
-        </footer>
-      </div>
-    </QueueProvider>
+    <div className="min-h-screen bg-[#0A192F] text-white flex flex-col justify-center items-center p-6 text-center font-sans">
+      <SACLogo className="w-16 h-16 mb-4 drop-shadow-md" />
+      <span className="text-xs font-bold text-amber-400 uppercase tracking-widest block mb-1">
+        ST. ANTHONY&apos;S COLLEGE
+      </span>
+      <h1 className="text-2xl font-black mb-2">Staff Portal has transitioned to Cashier Terminal</h1>
+      <p className="text-sm text-blue-200 max-w-md mb-6">
+        Redirecting you to the authorized Cashier Terminal for Window 1 and Window 2...
+      </p>
+      <Link
+        href="/cashier"
+        className="bg-amber-500 hover:bg-amber-600 text-blue-950 font-black px-6 py-3 rounded-2xl text-sm transition-all shadow-md inline-flex items-center space-x-2"
+      >
+        <span>Proceed to Cashier Terminal</span>
+        <ArrowRight className="w-4 h-4" />
+      </Link>
+    </div>
   );
 }

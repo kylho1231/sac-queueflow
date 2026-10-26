@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { useQueue } from '@/context/QueueContext';
+import { useCashierQueue } from '@/context/CashierQueueContext';
 import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
 
 export function ToastContainer() {
-  const { toasts, dismissToast } = useQueue();
+  const { toasts, dismissToast } = useCashierQueue();
 
   if (toasts.length === 0) return null;
 
