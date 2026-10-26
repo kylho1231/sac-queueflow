@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { QueueProvider, useCashierQueue } from '@/context/CashierQueueContext';
 import { SACLogo } from '@/components/SACLogo';
 import { ToastContainer } from '@/components/ToastContainer';
+import { CallNotificationAlert } from '@/components/CallNotificationAlert';
+import { playFullAudioCall } from '@/lib/notifications';
 import { 
   KeyRound, 
   Mail, 
@@ -22,7 +24,8 @@ import {
   Check,
   Send,
   PlusCircle,
-  Users
+  Users,
+  Radio
 } from 'lucide-react';
 
 function CashierTerminalContent() {
@@ -40,6 +43,9 @@ function CashierTerminalContent() {
     markNoShow,
     printNewTicket,
     tickets,
+    nowServingTicket,
+    latestCallNotification,
+    dismissCallNotification,
   } = useCashierQueue();
 
   // Login form state
@@ -59,6 +65,9 @@ function CashierTerminalContent() {
   const currentTicket = tickets.find(
     t => t.assignedCounterNumber === activeCounterNum && (t.status === 'CALLED' || t.status === 'SERVING')
   );
+
+  const servingC1 = nowServingTicket(1);
+  const servingC2 = nowServingTicket(2);
 
   const waitingTickets = tickets
     .filter(t => t.status === 'WAITING')
@@ -80,16 +89,13 @@ function CashierTerminalContent() {
     return () => clearInterval(timer);
   }, [currentTicket]);
 
-  // Voice announcement helper
-  const announceTicket = (ticketNum: string, windowNum: number) => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(
-        `Ticket number ${ticketNum.split('').join(' ')}, please proceed to Cashier Window ${windowNum}.`
-      );
-      u.rate = 0.9;
-      window.speechSynthesis.speak(u);
-    }
+  // Voice & Audio Chime announcement helper
+  const announceTicket = (ticketNum: string, windowNum: number, isRecall = false) => {
+    playFullAudioCall({
+      ticketNumber: ticketNum,
+      windowNumber: windowNum as 1 | 2,
+      isRecall,
+    }).catch(() => {});
   };
 
   // Handle Send OTP
@@ -132,7 +138,7 @@ function CashierTerminalContent() {
   const handleRecall = () => {
     if (currentTicket) {
       recallTicket(currentTicket.id);
-      announceTicket(currentTicket.ticketNumber, activeCounterNum);
+      announceTicket(currentTicket.ticketNumber, activeCounterNum, true);
     }
   };
 
@@ -376,6 +382,32 @@ function CashierTerminalContent() {
           </div>
         </div>
       </header>
+
+      {/* Floating Call Notification Alert Flash */}
+      <CallNotificationAlert
+        notification={latestCallNotification}
+        onDismiss={dismissCallNotification}
+      />
+
+      {/* Live Windows Status Strip (What number is in now across Windows 1 & 2) */}
+      <div className="bg-[#FFF8F1] border-b border-[#EA671B]/25 px-3.5 sm:px-8 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs gap-2">
+        <div className="flex items-center space-x-2">
+          <Radio className="w-3.5 h-3.5 text-[#EA671B] animate-pulse" />
+          <span className="font-extrabold text-[#751A1A] uppercase tracking-wider">
+            Live Calling Status (What Number is In Now):
+          </span>
+        </div>
+        <div className="flex items-center space-x-2.5 font-mono font-bold flex-wrap">
+          <span className="bg-white px-2.5 py-1 rounded-lg border border-[#EA671B]/30 text-slate-800 flex items-center space-x-1.5 shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>Window 1: <strong className="text-[#751A1A]">{servingC1 ? servingC1.ticketNumber : 'Standby'}</strong></span>
+          </span>
+          <span className="bg-white px-2.5 py-1 rounded-lg border border-[#EA671B]/30 text-slate-800 flex items-center space-x-1.5 shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>Window 2: <strong className="text-[#751A1A]">{servingC2 ? servingC2.ticketNumber : 'Standby'}</strong></span>
+          </span>
+        </div>
+      </div>
 
       {/* Main Operations Area: Focused 100% on Calling Out Numbers */}
       <main className="max-w-6xl w-full mx-auto p-3 sm:p-6 lg:p-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white items-start">

@@ -24,6 +24,15 @@ export interface ToastMessage {
   type: 'success' | 'info' | 'warning' | 'alert';
 }
 
+export interface ActiveCallNotification {
+  id: string;
+  ticketNumber: string;
+  windowNumber: 1 | 2;
+  studentName?: string;
+  calledAt: string;
+  isRecall?: boolean;
+}
+
 export interface CashierAuthUser {
   email: string;
   counterNumber: 1 | 2;
@@ -65,6 +74,11 @@ interface CashierContextType {
   // Live Displays
   nowServingTicket: (counterNumber: 1 | 2) => QueueTicket | undefined;
   upNextTickets: QueueTicket[];
+  recentlyCalledTickets: QueueTicket[];
+
+  // Real-Time Call Notifications (What number is in now)
+  latestCallNotification: ActiveCallNotification | null;
+  dismissCallNotification: () => void;
 
   // Toast
   toasts: ToastMessage[];
@@ -96,6 +110,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [generatedOtps, setGeneratedOtps] = useState<Record<string, string>>({});
   const [lastGeneratedOtp, setLastGeneratedOtp] = useState<string | null>(null);
+  const [latestCallNotification, setLatestCallNotification] = useState<ActiveCallNotification | null>(null);
 
   // Restore session from localStorage if available
   useEffect(() => {
@@ -108,6 +123,10 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       if (storedTkts) {
         setTickets(JSON.parse(storedTkts));
       }
+      const storedNotif = localStorage.getItem('sac_latest_call_notification');
+      if (storedNotif) {
+        setLatestCallNotification(JSON.parse(storedNotif));
+      }
     } catch {}
 
     let channel: BroadcastChannel | null = null;
@@ -117,6 +136,9 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
         if (event.data?.type === 'SYNC_STATE') {
           if (event.data.tickets) setTickets(event.data.tickets);
           if (event.data.counters) setCounters(event.data.counters);
+          if (event.data.callNotification) {
+            setLatestCallNotification(event.data.callNotification);
+          }
         }
       };
     }
@@ -125,6 +147,11 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       if (e.key === 'sac_cashier_tickets' && e.newValue) {
         try {
           setTickets(JSON.parse(e.newValue));
+        } catch {}
+      }
+      if (e.key === 'sac_latest_call_notification' && e.newValue) {
+        try {
+          setLatestCallNotification(JSON.parse(e.newValue));
         } catch {}
       }
     };
@@ -136,14 +163,26 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const broadcastSync = (updatedTickets: QueueTicket[], updatedCounters: ServiceCounter[] = counters) => {
+  const broadcastSync = (
+    updatedTickets: QueueTicket[], 
+    updatedCounters: ServiceCounter[] = counters,
+    callNotification?: ActiveCallNotification
+  ) => {
     try {
       localStorage.setItem('sac_cashier_tickets', JSON.stringify(updatedTickets));
+      if (callNotification) {
+        localStorage.setItem('sac_latest_call_notification', JSON.stringify(callNotification));
+      }
     } catch {}
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       try {
         const bc = new BroadcastChannel('sac_queue_sync');
-        bc.postMessage({ type: 'SYNC_STATE', tickets: updatedTickets, counters: updatedCounters });
+        bc.postMessage({ 
+          type: 'SYNC_STATE', 
+          tickets: updatedTickets, 
+          counters: updatedCounters,
+          callNotification 
+        });
         bc.close();
       } catch {}
     }
@@ -249,6 +288,15 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     const nextTicket = waitingTickets[0];
     const nowIso = new Date().toISOString();
 
+    const callNotif: ActiveCallNotification = {
+      id: `call-${nextTicket.id}-${Date.now()}`,
+      ticketNumber: nextTicket.ticketNumber,
+      windowNumber: counterNumber,
+      studentName: nextTicket.studentName,
+      calledAt: nowIso,
+      isRecall: false,
+    };
+
     const updatedTickets = tickets.map(t => {
       if (t.id === nextTicket.id) {
         return {
@@ -275,7 +323,8 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
 
     setTickets(updatedTickets);
     setCounters(updatedCounters);
-    broadcastSync(updatedTickets, updatedCounters);
+    setLatestCallNotification(callNotif);
+    broadcastSync(updatedTickets, updatedCounters, callNotif);
 
     showToast('Now Calling', `Ticket ${nextTicket.ticketNumber} called to Cashier Window ${counterNumber}!`, 'success');
     return nextTicket;
@@ -284,7 +333,18 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   const recallTicket = (ticketId: string) => {
     const tkt = tickets.find(t => t.id === ticketId);
     if (!tkt) return;
-    showToast('Ticket Recalled', `Ticket ${tkt.ticketNumber} recalled to Cashier Window ${tkt.assignedCounterNumber || 1}.`, 'warning');
+    const windowNum = (tkt.assignedCounterNumber || 1) as 1 | 2;
+    const callNotif: ActiveCallNotification = {
+      id: `recall-${tkt.id}-${Date.now()}`,
+      ticketNumber: tkt.ticketNumber,
+      windowNumber: windowNum,
+      studentName: tkt.studentName,
+      calledAt: new Date().toISOString(),
+      isRecall: true,
+    };
+    setLatestCallNotification(callNotif);
+    broadcastSync(tickets, counters, callNotif);
+    showToast('Ticket Recalled', `Ticket ${tkt.ticketNumber} recalled to Cashier Window ${windowNum}.`, 'warning');
   };
 
   const startServing = (ticketId: string) => {
@@ -395,6 +455,15 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime())
     .slice(0, 6);
 
+  const recentlyCalledTickets = tickets
+    .filter(t => t.calledAt)
+    .sort((a, b) => new Date(b.calledAt!).getTime() - new Date(a.calledAt!).getTime())
+    .slice(0, 8);
+
+  const dismissCallNotification = () => {
+    setLatestCallNotification(null);
+  };
+
   return (
     <CashierContext.Provider
       value={{
@@ -417,6 +486,9 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
         printNewTicket,
         nowServingTicket,
         upNextTickets,
+        recentlyCalledTickets,
+        latestCallNotification,
+        dismissCallNotification,
         toasts,
         dismissToast,
         showToast,
