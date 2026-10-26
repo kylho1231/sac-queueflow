@@ -203,61 +203,61 @@ export function StudentDashboard() {
               return (
                 <div
                   key={ticket.id}
-                  className={`bg-white rounded-3xl border transition-all p-5 sm:p-6 shadow-sm relative overflow-hidden ${
+                  className={`bg-white rounded-3xl border transition-all duration-300 p-6 sm:p-7 shadow-md hover:shadow-xl relative overflow-hidden ${
                     isCalled 
-                      ? 'border-rose-400 ring-2 ring-rose-300 bg-rose-50/20' 
+                      ? 'border-rose-400 ring-4 ring-rose-300/40 bg-gradient-to-b from-rose-50/40 to-white' 
                       : isServing 
-                      ? 'border-emerald-400 ring-2 ring-emerald-200' 
+                      ? 'border-emerald-400 ring-4 ring-emerald-200/50 bg-gradient-to-b from-emerald-50/40 to-white' 
                       : isDeferred
-                      ? 'border-blue-300 bg-blue-50/20'
-                      : 'border-slate-200/90'
+                      ? 'border-blue-300 ring-2 ring-blue-100 bg-gradient-to-b from-blue-50/30 to-white'
+                      : 'border-teal-100/80 hover:border-teal-300'
                   }`}
                 >
                   {/* Top Office & Status badge */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div>
-                      <span className="text-xs font-bold text-teal-800 uppercase tracking-wider block">
+                      <span className="text-xs font-extrabold text-teal-800 uppercase tracking-widest block">
                         {office?.name}
                       </span>
-                      <span className="text-xs text-slate-500 font-medium">
+                      <span className="text-xs text-slate-500 font-semibold mt-0.5 block">
                         {service?.name}
                       </span>
                     </div>
 
-                    <div className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${badge.bg}`}>
+                    <div className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border shadow-2xs ${badge.bg}`}>
                       <span className={`w-2 h-2 rounded-full ${badge.dot}`} />
                       <span>{badge.label}</span>
                     </div>
                   </div>
 
-                  {/* Main Queue Number Display */}
-                  <div className="mt-5 text-center bg-slate-50/80 rounded-2xl p-4 border border-slate-100">
-                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block">
-                      Your Queue Number
+                  {/* Main Queue Number Display with Enhanced Typography */}
+                  <div className="mt-5 text-center bg-gradient-to-b from-slate-50 to-teal-50/30 rounded-2xl p-5 border border-teal-100/60 shadow-inner">
+                    <span className="text-[11px] text-teal-800/80 font-bold uppercase tracking-widest block">
+                      Assigned Queue Number
                     </span>
-                    <span className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight block my-1">
+                    <span className="text-5xl sm:text-6xl font-black text-teal-950 tracking-tight block my-1 font-mono drop-shadow-2xs">
                       {ticket.ticketNumber}
                     </span>
-                    <span className="text-xs text-slate-500">
-                      Opaque Pass Token: <span className="font-mono text-teal-800 font-semibold">{ticket.lookupCode}</span>
+                    <span className="text-xs text-slate-500 font-medium">
+                      Opaque Pass Token: <span className="font-mono text-teal-800 font-bold bg-white px-2 py-0.5 rounded-md border border-teal-200">{ticket.lookupCode}</span>
                     </span>
                   </div>
 
                   {/* Live Queue Progress Indicators */}
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                      <span className="text-[11px] text-slate-500 flex items-center space-x-1">
-                        <Users className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
+                  <div className="grid grid-cols-2 gap-3.5 mt-4">
+                    <div className="bg-slate-50/90 rounded-2xl p-3.5 border border-slate-200/80 shadow-2xs">
+                      <span className="text-[11px] text-slate-500 font-semibold flex items-center space-x-1.5">
+                        <Users className="w-4 h-4 text-teal-600" aria-hidden="true" />
                         <span>Students Ahead</span>
                       </span>
-                      <span className="text-xl font-bold text-slate-900 mt-1 block">
-                        {isServing ? '0 (At Counter)' : isCalled ? '0 (Your Turn)' : estimate.studentsAhead}
+                      <span className="text-2xl font-black text-slate-900 mt-1 block">
+                        {isServing ? '0 (At Window)' : isCalled ? '0 (Your Turn)' : estimate.studentsAhead}
                       </span>
                     </div>
 
-                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                      <span className="text-[11px] text-slate-500 flex items-center space-x-1">
-                        <Clock className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
+                    <div className="bg-slate-50/90 rounded-2xl p-3.5 border border-slate-200/80 shadow-2xs">
+                      <span className="text-[11px] text-slate-500 font-semibold flex items-center space-x-1.5">
+                        <Clock className="w-4 h-4 text-teal-600" aria-hidden="true" />
                         <span>Estimated Wait</span>
                       </span>
                       <span className="text-xs font-bold text-teal-900 mt-1 block truncate" title={estimate.formattedEstimate}>

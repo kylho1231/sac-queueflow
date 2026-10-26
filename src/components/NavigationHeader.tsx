@@ -41,60 +41,60 @@ export function NavigationHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-teal-100 shadow-xs">
+    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-teal-100/90 shadow-sm transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Branding */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-700 to-teal-500 flex items-center justify-center text-white shadow-sm ring-2 ring-teal-100">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-teal-800 via-teal-700 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-teal-900/10 ring-2 ring-teal-200/50">
               <Building2 className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-bold text-lg text-teal-950 tracking-tight">SAC QueueFlow</span>
-                <span className="bg-teal-100/70 text-teal-800 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-teal-200">
+                <span className="font-extrabold text-xl text-teal-950 tracking-tight">SAC QueueFlow</span>
+                <span className="bg-gradient-to-r from-teal-100 to-emerald-100 text-teal-900 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-teal-300/60 shadow-2xs">
                   SAC Antique
                 </span>
               </div>
-              <p className="text-xs text-slate-500 hidden sm:block">
-                St. Anthony&apos;s College • Smart Campus Queuing
+              <p className="text-[11px] text-slate-500 hidden sm:block font-medium">
+                St. Anthony&apos;s College &bull; Smart Student Queuing Platform
               </p>
             </div>
           </div>
 
           {/* Quick Role Switcher (MVP Demonstration Mode) */}
-          <div className="hidden md:flex items-center bg-slate-100/80 p-1 rounded-xl border border-slate-200 text-xs font-medium">
+          <div className="hidden md:flex items-center bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/90 text-xs font-medium shadow-inner">
             <button
               onClick={() => handleRoleChange('student')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
                 currentRole === 'student'
-                  ? 'bg-white text-teal-900 shadow-xs font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-teal-950 shadow-sm font-bold scale-[1.02]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <GraduationCap className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
+              <GraduationCap className="w-4 h-4 text-teal-600" aria-hidden="true" />
               <span>Student View</span>
             </button>
             <button
               onClick={() => handleRoleChange('staff')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
                 currentRole === 'staff'
-                  ? 'bg-white text-teal-900 shadow-xs font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-teal-950 shadow-sm font-bold scale-[1.02]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <UserCheck className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
+              <UserCheck className="w-4 h-4 text-teal-600" aria-hidden="true" />
               <span>Staff Desk</span>
             </button>
             <button
               onClick={() => handleRoleChange('admin')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
                 currentRole === 'admin'
-                  ? 'bg-white text-teal-900 shadow-xs font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-teal-950 shadow-sm font-bold scale-[1.02]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
+              <ShieldCheck className="w-4 h-4 text-teal-600" aria-hidden="true" />
               <span>Admin & Analytics</span>
             </button>
           </div>
