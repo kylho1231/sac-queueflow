@@ -15,11 +15,11 @@ export const CASHIER_OFFICE: Office = {
   prefix: 'C',
   location: 'Main Administration Building, Ground Floor',
   isOpen: true,
-  activeCountersCount: 2,
+  activeCountersCount: 5,
   averageServiceMinutes: 3,
 };
 
-// 2 Exclusive Dedicated Cashier Counters (Cashier 1 & Cashier 2)
+// 5 Dedicated Cashier Counters (Windows 1 to 5)
 export const CASHIER_COUNTERS: ServiceCounter[] = [
   {
     id: 'cnt-csh-1',
@@ -36,6 +36,33 @@ export const CASHIER_COUNTERS: ServiceCounter[] = [
     counterNumber: 2,
     name: 'Cashier Counter 2 (Window 2)',
     assignedStaffName: 'Cashier Officer #2',
+    isPaused: false,
+    statusText: 'Available',
+  },
+  {
+    id: 'cnt-csh-3',
+    officeId: 'off-cashier',
+    counterNumber: 3,
+    name: 'Cashier Counter 3 (Window 3)',
+    assignedStaffName: 'Cashier Officer #3',
+    isPaused: false,
+    statusText: 'Available',
+  },
+  {
+    id: 'cnt-csh-4',
+    officeId: 'off-cashier',
+    counterNumber: 4,
+    name: 'Cashier Counter 4 (Window 4)',
+    assignedStaffName: 'Cashier Officer #4',
+    isPaused: false,
+    statusText: 'Available',
+  },
+  {
+    id: 'cnt-csh-5',
+    officeId: 'off-cashier',
+    counterNumber: 5,
+    name: 'Cashier Counter 5 (Window 5)',
+    assignedStaffName: 'Cashier Officer #5',
     isPaused: false,
     statusText: 'Available',
   }
@@ -192,7 +219,7 @@ export const CASHIER_ANNOUNCEMENTS: CampusAnnouncement[] = [
   {
     id: 'anc-csh-1',
     title: 'Cashier Queuing Active',
-    content: 'Cashier Windows 1 & 2 are currently calling. Please proceed promptly when your queue number is announced.',
+    content: 'Cashier Windows 1 to 5 are currently calling. Please proceed promptly when your queue number is announced.',
     priority: 'URGENT',
     date: 'Today',
     isActive: true,

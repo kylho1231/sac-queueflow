@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useCashierQueue, ActiveCallNotification } from '@/context/CashierQueueContext';
+import { useCashierQueue, ActiveCallNotification, WindowNumber } from '@/context/CashierQueueContext';
+import { QueueTicket } from '@/types/queue';
 import { isSeniorCitizenTicket } from '@/lib/utils';
 import { SACLogo } from '@/components/SACLogo';
 import { CallNotificationAlert } from '@/components/CallNotificationAlert';
@@ -126,33 +127,33 @@ export default function StudentLiveTVMonitor() {
     });
   }, [latestCallNotification, audioEnabled]);
 
-  // Active window serving tickets: perfectly synchronized with latestCallNotification for zero-latency UI matching
-  const rawServingC1 = nowServingTicket(1);
-  const rawServingC2 = nowServingTicket(2);
-
-  const servingC1 = (latestCallNotification?.windowNumber === 1 && latestCallNotification.ticketNumber)
-    ? (rawServingC1?.ticketNumber === latestCallNotification.ticketNumber ? rawServingC1 : {
-        ...rawServingC1,
+  // Active window serving tickets: perfectly synchronized with latestCallNotification for zero-latency UI matching across Windows 1 to 5
+  const getServingTicketForWindow = (win: WindowNumber) => {
+    const rawServing = nowServingTicket(win);
+    if (latestCallNotification?.windowNumber === win && latestCallNotification.ticketNumber) {
+      if (rawServing?.ticketNumber === latestCallNotification.ticketNumber) {
+        return rawServing;
+      }
+      return {
+        ...rawServing,
         id: latestCallNotification.id,
         ticketNumber: latestCallNotification.ticketNumber,
         studentName: latestCallNotification.studentName || `Ticket ${latestCallNotification.ticketNumber}`,
         calledAt: latestCallNotification.calledAt,
         status: 'CALLED' as const,
-        assignedCounterNumber: 1,
-      })
-    : rawServingC1;
+        assignedCounterNumber: win,
+      } as QueueTicket;
+    }
+    return rawServing;
+  };
 
-  const servingC2 = (latestCallNotification?.windowNumber === 2 && latestCallNotification.ticketNumber)
-    ? (rawServingC2?.ticketNumber === latestCallNotification.ticketNumber ? rawServingC2 : {
-        ...rawServingC2,
-        id: latestCallNotification.id,
-        ticketNumber: latestCallNotification.ticketNumber,
-        studentName: latestCallNotification.studentName || `Ticket ${latestCallNotification.ticketNumber}`,
-        calledAt: latestCallNotification.calledAt,
-        status: 'CALLED' as const,
-        assignedCounterNumber: 2,
-      })
-    : rawServingC2;
+  const servingWindows: Record<WindowNumber, QueueTicket | undefined> = {
+    1: getServingTicketForWindow(1),
+    2: getServingTicketForWindow(2),
+    3: getServingTicketForWindow(3),
+    4: getServingTicketForWindow(4),
+    5: getServingTicketForWindow(5),
+  };
 
   // Time format helper for recent tickets (SSR / prerender-safe)
   const formatTimeAgo = (isoString?: string) => {
@@ -310,45 +311,36 @@ export default function StudentLiveTVMonitor() {
           </div>
         </div>
 
-        {/* Live Active Number Badges */}
+        {/* Live Active Number Badges across Windows 1 to 5 */}
         <div 
           aria-live="polite" 
           aria-atomic="true"
-          className="flex items-center space-x-2 sm:space-x-3 w-full md:w-auto justify-between md:justify-end flex-wrap gap-2"
+          className="flex items-center space-x-2 sm:space-x-2.5 w-full md:w-auto justify-between md:justify-end flex-wrap gap-1.5"
         >
-          {/* Window 1 Badge */}
-          <div className="bg-white border-2 border-[#EA671B]/30 rounded-xl px-3 py-1.5 shadow-2xs flex items-center space-x-2 flex-1 md:flex-initial">
-            <span className="text-[10px] font-extrabold text-[#751A1A] uppercase tracking-wider block">W-1:</span>
-            <span className="text-base sm:text-lg font-black font-mono text-[#751A1A] leading-none">
-              {servingC1 ? servingC1.ticketNumber : 'STANDBY'}
-            </span>
-            {servingC1 && isSeniorCitizenTicket(servingC1) && (
-              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-md uppercase inline-flex items-center space-x-0.5">
-                <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
-                <span>SENIOR</span>
-              </span>
-            )}
-            {servingC1 && (
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Window 1 Active" />
-            )}
-          </div>
-
-          {/* Window 2 Badge */}
-          <div className="bg-white border-2 border-[#EA671B]/30 rounded-xl px-3 py-1.5 shadow-2xs flex items-center space-x-2 flex-1 md:flex-initial">
-            <span className="text-[10px] font-extrabold text-[#751A1A] uppercase tracking-wider block">W-2:</span>
-            <span className="text-base sm:text-lg font-black font-mono text-[#751A1A] leading-none">
-              {servingC2 ? servingC2.ticketNumber : 'STANDBY'}
-            </span>
-            {servingC2 && isSeniorCitizenTicket(servingC2) && (
-              <span className="text-[9px] font-black bg-[#EA671B] text-white px-1.5 py-0.5 rounded-md uppercase inline-flex items-center space-x-0.5">
-                <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
-                <span>SENIOR</span>
-              </span>
-            )}
-            {servingC2 && (
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Window 2 Active" />
-            )}
-          </div>
+          {([1, 2, 3, 4, 5] as const).map((win) => {
+            const serv = servingWindows[win];
+            const isSen = serv ? isSeniorCitizenTicket(serv) : false;
+            return (
+              <div 
+                key={win}
+                className="bg-white border-2 border-[#EA671B]/30 rounded-xl px-2.5 py-1.5 shadow-2xs flex items-center space-x-1.5 flex-1 md:flex-initial min-w-[95px]"
+              >
+                <span className="text-[10px] font-extrabold text-[#751A1A] uppercase tracking-wider block">W-{win}:</span>
+                <span className="text-sm sm:text-base font-black font-mono text-[#751A1A] leading-none">
+                  {serv ? serv.ticketNumber : 'STANDBY'}
+                </span>
+                {isSen && (
+                  <span className="text-[8px] sm:text-[9px] font-black bg-[#EA671B] text-white px-1 py-0.5 rounded uppercase inline-flex items-center space-x-0.5">
+                    <HeartHandshake className="w-2 h-2 text-white shrink-0" aria-hidden="true" />
+                    <span>SR</span>
+                  </span>
+                )}
+                {serv && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title={`Window ${win} Active`} />
+                )}
+              </div>
+            );
+          })}
 
           {/* Last Call Pill */}
           {latestCallNotification && (
@@ -360,157 +352,95 @@ export default function StudentLiveTVMonitor() {
         </div>
       </section>
 
-      {/* CENTER SECTION: 2 ACTIVE CASHIER WINDOWS & QUEUE ROSTER */}
+      {/* CENTER SECTION: 5 ACTIVE CASHIER WINDOWS & QUEUE ROSTER */}
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 my-2 sm:my-3 flex-1 items-stretch">
-        {/* LEFT 8 COLS: CASHIER 1 AND CASHIER 2 CALLING BOARDS */}
-        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-          {/* CASHIER WINDOW 1 */}
-          <div className="bg-white rounded-2xl sm:rounded-3xl border-3 border-[#EA671B]/40 hover:border-[#EA671B] p-5 sm:p-7 flex flex-col justify-between text-center shadow-lg shadow-amber-950/5 relative overflow-hidden transition-all">
-            {/* Top Badge */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 gap-2">
-              <div className="flex items-center space-x-2">
-                <span className="bg-[#751A1A] text-white font-black text-xs sm:text-sm px-3 sm:px-4 py-1 rounded-full uppercase tracking-wider shadow-xs">
-                  WINDOW 1
-                </span>
-                {servingC1 && (
-                  <span className="bg-[#EA671B] text-white font-black text-[10px] px-2 py-0.5 rounded-full uppercase">
-                    IN NOW
+        {/* LEFT 8 COLS: CASHIER WINDOWS 1 TO 5 CALLING BOARDS */}
+        <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4.5">
+          {([1, 2, 3, 4, 5] as const).map((win) => {
+            const serv = servingWindows[win];
+            const isSenior = serv ? isSeniorCitizenTicket(serv) : false;
+            return (
+              <div
+                key={win}
+                className={`bg-white rounded-2xl sm:rounded-3xl border-3 p-4 sm:p-5 flex flex-col justify-between text-center shadow-md relative overflow-hidden transition-all ${
+                  serv 
+                    ? 'border-[#EA671B] shadow-amber-950/10' 
+                    : 'border-[#EA671B]/30 hover:border-[#EA671B]/60'
+                }`}
+              >
+                {/* Top Badge */}
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 gap-1.5">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="bg-[#751A1A] text-white font-black text-xs sm:text-sm px-2.5 sm:px-3 py-1 rounded-full uppercase tracking-wider shadow-xs">
+                      WINDOW {win}
+                    </span>
+                    {serv && (
+                      <span className="bg-[#EA671B] text-white font-black text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full uppercase">
+                        IN NOW
+                      </span>
+                    )}
+                  </div>
+                  <span className="inline-flex items-center space-x-1 text-[10px] sm:text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                    <span>ONLINE</span>
                   </span>
-                )}
-              </div>
-              <span className="inline-flex items-center space-x-1.5 text-[11px] sm:text-xs text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold shrink-0">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                <span>ONLINE</span>
-              </span>
-            </div>
+                </div>
 
-            <div className="my-auto py-5 sm:py-8">
-              <div className="flex items-center justify-center space-x-2 mb-1 sm:mb-2">
-                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#B44606] font-black block">
-                  NOW SERVING NUMBER
-                </span>
-                {servingC1 && isSeniorCitizenTicket(servingC1) && (
-                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs inline-flex items-center space-x-1">
-                    <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
-                    <span>Priority Lane</span>
+                <div className="my-auto py-3.5 sm:py-5">
+                  <div className="flex items-center justify-center space-x-1.5 mb-1">
+                    <span className="text-[10px] sm:text-xs uppercase tracking-widest text-[#B44606] font-black block">
+                      NOW SERVING NUMBER
+                    </span>
+                    {isSenior && (
+                      <span className="bg-[#EA671B] text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs inline-flex items-center space-x-1">
+                        <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
+                        <span>Priority Lane</span>
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-4xl xs:text-5xl sm:text-6xl xl:text-7xl font-black font-mono text-[#751A1A] tracking-tight block leading-none my-1.5 sm:my-2">
+                    {serv ? serv.ticketNumber : 'STANDBY'}
                   </span>
-                )}
-              </div>
-              <span className="text-6xl xs:text-7xl sm:text-8xl font-black font-mono text-[#751A1A] tracking-tight block leading-none my-2 sm:my-3">
-                {servingC1 ? servingC1.ticketNumber : 'STANDBY'}
-              </span>
 
-              <div className="mt-4 p-3 sm:p-3.5 bg-[#FFF8F1] rounded-2xl border border-[#EA671B]/20 max-w-full sm:max-w-xs mx-auto shadow-2xs">
-                <span className="text-xs sm:text-sm font-bold text-[#751A1A] block truncate">
-                  {servingC1 ? servingC1.studentName : 'Window Ready'}
-                </span>
-                <span className="text-[11px] sm:text-xs text-[#B44606] font-mono font-semibold block mt-0.5">
-                  {servingC1 
-                    ? `Called: ${formatTimeAgo(servingC1.calledAt)}` 
-                    : 'Awaiting next queue number call'}
-                </span>
-              </div>
-            </div>
+                  <div className="mt-2.5 p-2.5 sm:p-3 bg-[#FFF8F1] rounded-2xl border border-[#EA671B]/20 max-w-full sm:max-w-xs mx-auto shadow-2xs">
+                    <span className="text-xs sm:text-sm font-bold text-[#751A1A] block truncate">
+                      {serv ? serv.studentName : 'Window Ready'}
+                    </span>
+                    <span className="text-[10px] sm:text-[11px] text-[#B44606] font-mono font-semibold block mt-0.5">
+                      {serv 
+                        ? `Called: ${formatTimeAgo(serv.calledAt)}` 
+                        : 'Awaiting next queue number call'}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs text-slate-600 font-semibold px-1">
-              <div className="flex items-center space-x-1.5">
-                <Receipt className="w-4 h-4 text-[#EA671B]" aria-hidden="true" />
-                <span>Cashier Officer #1</span>
+                <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600 font-semibold px-1">
+                  <div className="flex items-center space-x-1.5">
+                    <Receipt className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
+                    <span>Cashier Officer #{win}</span>
+                  </div>
+                  {serv && (
+                    <button
+                      type="button"
+                      onClick={() => handleReplayAudio({
+                        id: serv.id,
+                        ticketNumber: serv.ticketNumber,
+                        windowNumber: win,
+                        studentName: serv.studentName,
+                        calledAt: serv.calledAt || '',
+                      })}
+                      className="min-h-[44px] px-2 py-1 text-[#751A1A] hover:text-[#B44606] flex items-center space-x-1 font-bold cursor-pointer"
+                      title={`Replay Voice Chime for Window ${win}`}
+                      aria-label={`Replay Voice Chime for Window ${win}`}
+                    >
+                      <Volume2 className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
+                      <span>Chime</span>
+                    </button>
+                  )}
+                </div>
               </div>
-              {servingC1 && (
-                <button
-                  type="button"
-                  onClick={() => handleReplayAudio({
-                    id: servingC1.id,
-                    ticketNumber: servingC1.ticketNumber,
-                    windowNumber: 1,
-                    studentName: servingC1.studentName,
-                    calledAt: servingC1.calledAt || '',
-                  })}
-                  className="min-h-[44px] px-2 py-1 text-[#751A1A] hover:text-[#B44606] flex items-center space-x-1 font-bold cursor-pointer"
-                  title="Replay Voice Chime for Window 1"
-                  aria-label="Replay Voice Chime for Window 1"
-                >
-                  <Volume2 className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
-                  <span>Chime</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* CASHIER WINDOW 2 */}
-          <div className="bg-white rounded-2xl sm:rounded-3xl border-3 border-[#EA671B]/40 hover:border-[#EA671B] p-5 sm:p-7 flex flex-col justify-between text-center shadow-lg shadow-amber-950/5 relative overflow-hidden transition-all">
-            {/* Top Badge */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 gap-2">
-              <div className="flex items-center space-x-2">
-                <span className="bg-[#751A1A] text-white font-black text-xs sm:text-sm px-3 sm:px-4 py-1 rounded-full uppercase tracking-wider shadow-xs">
-                  WINDOW 2
-                </span>
-                {servingC2 && (
-                  <span className="bg-[#EA671B] text-white font-black text-[10px] px-2 py-0.5 rounded-full uppercase">
-                    IN NOW
-                  </span>
-                )}
-              </div>
-              <span className="inline-flex items-center space-x-1.5 text-[11px] sm:text-xs text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold shrink-0">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                <span>ONLINE</span>
-              </span>
-            </div>
-
-            <div className="my-auto py-5 sm:py-8">
-              <div className="flex items-center justify-center space-x-2 mb-1 sm:mb-2">
-                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#B44606] font-black block">
-                  NOW SERVING NUMBER
-                </span>
-                {servingC2 && isSeniorCitizenTicket(servingC2) && (
-                  <span className="bg-[#EA671B] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs inline-flex items-center space-x-1">
-                    <HeartHandshake className="w-2.5 h-2.5 text-white shrink-0" aria-hidden="true" />
-                    <span>Priority Lane</span>
-                  </span>
-                )}
-              </div>
-              <span className="text-6xl xs:text-7xl sm:text-8xl font-black font-mono text-[#751A1A] tracking-tight block leading-none my-2 sm:my-3">
-                {servingC2 ? servingC2.ticketNumber : 'STANDBY'}
-              </span>
-
-              <div className="mt-4 p-3 sm:p-3.5 bg-[#FFF8F1] rounded-2xl border border-[#EA671B]/20 max-w-full sm:max-w-xs mx-auto shadow-2xs">
-                <span className="text-xs sm:text-sm font-bold text-[#751A1A] block truncate">
-                  {servingC2 ? servingC2.studentName : 'Window Ready'}
-                </span>
-                <span className="text-[11px] sm:text-xs text-[#B44606] font-mono font-semibold block mt-0.5">
-                  {servingC2 
-                    ? `Called: ${formatTimeAgo(servingC2.calledAt)}` 
-                    : 'Awaiting next queue number call'}
-                </span>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs text-slate-600 font-semibold px-1">
-              <div className="flex items-center space-x-1.5">
-                <Receipt className="w-4 h-4 text-[#EA671B]" aria-hidden="true" />
-                <span>Cashier Officer #2</span>
-              </div>
-              {servingC2 && (
-                <button
-                  type="button"
-                  onClick={() => handleReplayAudio({
-                    id: servingC2.id,
-                    ticketNumber: servingC2.ticketNumber,
-                    windowNumber: 2,
-                    studentName: servingC2.studentName,
-                    calledAt: servingC2.calledAt || '',
-                  })}
-                  className="min-h-[44px] px-2 py-1 text-[#751A1A] hover:text-[#B44606] flex items-center space-x-1 font-bold cursor-pointer"
-                  title="Replay Voice Chime for Window 2"
-                  aria-label="Replay Voice Chime for Window 2"
-                >
-                  <Volume2 className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
-                  <span>Chime</span>
-                </button>
-              )}
-            </div>
-          </div>
+            );
+          })}
         </div>
 
         {/* RIGHT 4 COLS: DUAL-TAB ROSTER (UP NEXT & RECENTLY CALLED NOTIFICATIONS) */}
@@ -555,7 +485,7 @@ export default function StudentLiveTVMonitor() {
             {activeRosterTab === 'waiting' && (
               <div className="mt-3">
                 <p className="text-[11px] text-slate-500 mb-2.5">
-                  Tickets lined up in queue. Numbers are summoned sequentially to Windows 1 &amp; 2.
+                  Tickets lined up in queue. Numbers are summoned sequentially to Windows 1 to 5.
                 </p>
 
                 <div className="space-y-2 sm:space-y-2.5 max-h-72 overflow-y-auto pr-1">
@@ -698,7 +628,7 @@ export default function StudentLiveTVMonitor() {
             NOTICE
           </span>
           <span className="truncate text-slate-800 font-medium">
-            Cashier Windows 1 &amp; 2 are actively calling. Listen for audio chimes and watch for your number.
+            Cashier Windows 1 to 5 are actively calling. Listen for audio chimes and watch for your number.
           </span>
         </div>
 

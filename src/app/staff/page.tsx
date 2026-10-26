@@ -22,7 +22,7 @@ export default function StaffRedirectPage() {
       </span>
       <h1 className="text-2xl font-black text-[#751A1A] mb-2">Staff Portal has transitioned to Cashier Terminal</h1>
       <p className="text-sm text-slate-600 max-w-md mb-6 font-medium">
-        Redirecting you to the authorized Cashier Terminal for Window 1 and Window 2...
+        Redirecting you to the authorized Cashier Terminal for Windows 1 to 5...
       </p>
       <Link
         href="/cashier"

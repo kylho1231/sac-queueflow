@@ -3,7 +3,7 @@
 
 export interface CallNotificationPayload {
   ticketNumber: string;
-  windowNumber: 1 | 2;
+  windowNumber: 1 | 2 | 3 | 4 | 5;
   studentName?: string;
   isRecall?: boolean;
   isSeniorCitizen?: boolean;

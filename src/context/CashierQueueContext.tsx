@@ -24,10 +24,12 @@ export interface ToastMessage {
   type: 'success' | 'info' | 'warning' | 'alert';
 }
 
+export type WindowNumber = 1 | 2 | 3 | 4 | 5;
+
 export interface ActiveCallNotification {
   id: string;
   ticketNumber: string;
-  windowNumber: 1 | 2;
+  windowNumber: WindowNumber;
   studentName?: string;
   calledAt: string;
   isRecall?: boolean;
@@ -36,7 +38,7 @@ export interface ActiveCallNotification {
 
 export interface CashierAuthUser {
   email: string;
-  counterNumber: 1 | 2;
+  counterNumber: WindowNumber;
   counterId: string;
   name: string;
 }
@@ -44,8 +46,8 @@ export interface CashierAuthUser {
 interface CashierContextType {
   // Cashier Authentication (Email + OTP)
   cashierUser: CashierAuthUser | null;
-  sendOtp: (email: string, counterPreference?: 1 | 2) => { success: boolean; message: string; demoOtp?: string };
-  verifyOtp: (email: string, otp: string, counterPreference?: 1 | 2) => boolean;
+  sendOtp: (email: string, counterPreference?: WindowNumber) => { success: boolean; message: string; demoOtp?: string };
+  verifyOtp: (email: string, otp: string, counterPreference?: WindowNumber) => boolean;
   logoutCashier: () => void;
   lastGeneratedOtp: string | null;
 
@@ -56,17 +58,17 @@ interface CashierContextType {
   tickets: QueueTicket[];
   announcements: CampusAnnouncement[];
 
-  // Cashier Operations (Only Cashier 1 & 2 can perform)
-  callNextTicket: (counterNumber: 1 | 2, preference?: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN') => QueueTicket;
-  callSeniorCitizenTicket: (counterNumber: 1 | 2) => QueueTicket;
+  // Cashier Operations (Windows 1 to 5)
+  callNextTicket: (counterNumber: WindowNumber, preference?: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN') => QueueTicket;
+  callSeniorCitizenTicket: (counterNumber: WindowNumber) => QueueTicket;
   recallTicket: (ticketId: string) => void;
   startServing: (ticketId: string) => void;
   completeServing: (ticketId: string) => void;
-  completeAndCallNext: (ticketId: string, counterNumber: 1 | 2, preference?: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN') => QueueTicket;
+  completeAndCallNext: (ticketId: string, counterNumber: WindowNumber, preference?: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN') => QueueTicket;
   skipTicket: (ticketId: string) => void;
-  skipAndCallNext: (ticketId: string, counterNumber: 1 | 2) => QueueTicket;
+  skipAndCallNext: (ticketId: string, counterNumber: WindowNumber) => QueueTicket;
   markNoShow: (ticketId: string) => void;
-  markNoShowAndCallNext: (ticketId: string, counterNumber: 1 | 2) => QueueTicket;
+  markNoShowAndCallNext: (ticketId: string, counterNumber: WindowNumber) => QueueTicket;
   printNewTicket: (
     serviceId: string, 
     studentName?: string, 
@@ -78,7 +80,7 @@ interface CashierContextType {
   ) => QueueTicket;
 
   // Live Displays
-  nowServingTicket: (counterNumber: 1 | 2) => QueueTicket | undefined;
+  nowServingTicket: (counterNumber: WindowNumber) => QueueTicket | undefined;
   upNextTickets: QueueTicket[];
   recentlyCalledTickets: QueueTicket[];
 
@@ -94,8 +96,8 @@ interface CashierContextType {
 
 const CashierContext = createContext<CashierContextType | undefined>(undefined);
 
-// Authorized emails for the 2 official cashiers
-const AUTHORIZED_CASHIERS: Record<string, { counterNumber: 1 | 2; counterId: string; name: string }> = {
+// Authorized emails for the 5 official cashier windows
+const AUTHORIZED_CASHIERS: Record<string, { counterNumber: WindowNumber; counterId: string; name: string }> = {
   'cashier1@sac.edu.ph': {
     counterNumber: 1,
     counterId: 'cnt-csh-1',
@@ -105,6 +107,21 @@ const AUTHORIZED_CASHIERS: Record<string, { counterNumber: 1 | 2; counterId: str
     counterNumber: 2,
     counterId: 'cnt-csh-2',
     name: 'Cashier Officer #2 (Window 2)',
+  },
+  'cashier3@sac.edu.ph': {
+    counterNumber: 3,
+    counterId: 'cnt-csh-3',
+    name: 'Cashier Officer #3 (Window 3)',
+  },
+  'cashier4@sac.edu.ph': {
+    counterNumber: 4,
+    counterId: 'cnt-csh-4',
+    name: 'Cashier Officer #4 (Window 4)',
+  },
+  'cashier5@sac.edu.ph': {
+    counterNumber: 5,
+    counterId: 'cnt-csh-5',
+    name: 'Cashier Officer #5 (Window 5)',
   },
 };
 
@@ -250,7 +267,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   };
 
   // 1. Send OTP to Gmail
-  const sendOtp = (email: string, counterPreference: 1 | 2 = 1) => {
+  const sendOtp = (email: string, counterPreference: WindowNumber = 1) => {
     const normalized = email.trim().toLowerCase();
     if (!normalized || !normalized.includes('@')) {
       return {
@@ -282,7 +299,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   };
 
   // 2. Verify OTP
-  const verifyOtp = (email: string, otp: string, counterPreference: 1 | 2 = 1): boolean => {
+  const verifyOtp = (email: string, otp: string, counterPreference: WindowNumber = 1): boolean => {
     const normalized = email.trim().toLowerCase();
     const storedOtp = generatedOtps[normalized];
     const authorized = AUTHORIZED_CASHIERS[normalized];
@@ -321,7 +338,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
 
   // 3. Cashier Calls Next Ticket (NEVER FAILS: Auto-generates next if queue is empty)
   // Supports Priority Lane for Senior Citizens (S-001 to S-1000)
-  const callNextTicket = (counterNumber: 1 | 2, preference: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN' = 'ANY'): QueueTicket => {
+  const callNextTicket = (counterNumber: WindowNumber, preference: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN' = 'ANY'): QueueTicket => {
     const counter = counters.find(c => c.counterNumber === counterNumber);
     const nowIso = new Date().toISOString();
 
@@ -460,14 +477,14 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Dedicated action: Call Senior Citizen (Priority Lane)
-  const callSeniorCitizenTicket = (counterNumber: 1 | 2): QueueTicket => {
+  const callSeniorCitizenTicket = (counterNumber: WindowNumber): QueueTicket => {
     return callNextTicket(counterNumber, 'SENIOR_CITIZEN');
   };
 
   // 3b. Complete Current Ticket AND Immediately Call Next Student
   const completeAndCallNext = (
     ticketId: string, 
-    counterNumber: 1 | 2,
+    counterNumber: WindowNumber,
     preference: 'ANY' | 'REGULAR' | 'SENIOR_CITIZEN' = 'ANY'
   ): QueueTicket => {
     const counter = counters.find(c => c.counterNumber === counterNumber);
@@ -617,7 +634,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   const recallTicket = (ticketId: string) => {
     const tkt = tickets.find(t => t.id === ticketId);
     if (!tkt) return;
-    const windowNum = (tkt.assignedCounterNumber || 1) as 1 | 2;
+    const windowNum = (tkt.assignedCounterNumber || 1) as WindowNumber;
     const isSenior = isSeniorCitizenTicket(tkt);
     const callNotif: ActiveCallNotification = {
       id: `recall-${tkt.id}-${Date.now()}`,
@@ -707,7 +724,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     showToast('Ticket Skipped', `Ticket moved to skipped queue.`, 'warning');
   };
 
-  const skipAndCallNext = (ticketId: string, counterNumber: 1 | 2): QueueTicket => {
+  const skipAndCallNext = (ticketId: string, counterNumber: WindowNumber): QueueTicket => {
     const updated = tickets.map(t => t.id === ticketId ? { ...t, status: 'SKIPPED' as const } : t);
     setTickets(updated);
     return completeAndCallNext(ticketId, counterNumber);
@@ -727,7 +744,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     showToast('Marked No-Show', `Student was absent after the arrival period.`, 'alert');
   };
 
-  const markNoShowAndCallNext = (ticketId: string, counterNumber: 1 | 2): QueueTicket => {
+  const markNoShowAndCallNext = (ticketId: string, counterNumber: WindowNumber): QueueTicket => {
     const updated = tickets.map(t => t.id === ticketId ? { ...t, status: 'NO_SHOW' as const } : t);
     setTickets(updated);
     return completeAndCallNext(ticketId, counterNumber);
@@ -802,7 +819,7 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Helper for Cashier Window status: finds the latest active called/serving ticket for this window
-  const nowServingTicket = (counterNumber: 1 | 2) => {
+  const nowServingTicket = (counterNumber: WindowNumber) => {
     const matching = tickets
       .filter(t => t.assignedCounterNumber === counterNumber && (t.status === 'CALLED' || t.status === 'SERVING'))
       .sort((a, b) => new Date(b.calledAt || b.issuedAt).getTime() - new Date(a.calledAt || a.issuedAt).getTime());

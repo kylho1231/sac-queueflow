@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { INITIAL_CASHIER_TICKETS, CASHIER_COUNTERS } from '@/lib/cashier-data';
 import { QueueTicket, ServiceCounter } from '@/types/queue';
-import { ActiveCallNotification } from '@/context/CashierQueueContext';
+import { ActiveCallNotification, WindowNumber } from '@/context/CashierQueueContext';
 import { getNextSeqTicketNumber, formatTicketNumber, isSeniorCitizenTicket } from '@/lib/utils';
 import fs from 'fs';
 import path from 'path';
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     const nowIso = new Date().toISOString();
 
     if (action === 'CALL_NEXT') {
-      const counterNumber = (body.counterNumber || 1) as 1 | 2;
+      const counterNumber = (body.counterNumber || 1) as WindowNumber;
       const counter = state.counters.find((c) => c.counterNumber === counterNumber);
       const isSeniorRequest = body.isSeniorCitizen || body.preference === 'SENIOR_CITIZEN';
 
@@ -203,7 +203,7 @@ export async function POST(req: NextRequest) {
 
     if (action === 'COMPLETE_AND_CALL_NEXT') {
       const { ticketId, counterNumber = 1, isSeniorCitizen, preference } = body;
-      const counterNum = counterNumber as 1 | 2;
+      const counterNum = counterNumber as WindowNumber;
       const counter = state.counters.find((c) => c.counterNumber === counterNum);
       const isSeniorRequest = isSeniorCitizen || preference === 'SENIOR_CITIZEN';
 
@@ -354,7 +354,7 @@ export async function POST(req: NextRequest) {
         const callNotif: ActiveCallNotification = {
           id: `recall-${tkt.id}-${Date.now()}`,
           ticketNumber: tkt.ticketNumber,
-          windowNumber: (tkt.assignedCounterNumber || counterNumber) as 1 | 2,
+          windowNumber: (tkt.assignedCounterNumber || counterNumber) as WindowNumber,
           studentName: tkt.studentName,
           calledAt: nowIso,
           isRecall: true,
@@ -379,7 +379,7 @@ export async function POST(req: NextRequest) {
 
       // If callNext is requested, immediately summon the next ticket
       if (callNext && counterNumber) {
-        const counterNum = counterNumber as 1 | 2;
+        const counterNum = counterNumber as WindowNumber;
         const counter = state.counters.find((c) => c.counterNumber === counterNum);
         let nextTicket = state.tickets
           .filter((t) => t.status === 'WAITING')

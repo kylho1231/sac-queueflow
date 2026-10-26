@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { QueueProvider, useCashierQueue } from '@/context/CashierQueueContext';
+import { QueueProvider, useCashierQueue, WindowNumber } from '@/context/CashierQueueContext';
 import { SACLogo } from '@/components/SACLogo';
 import { ToastContainer } from '@/components/ToastContainer';
 import { CallNotificationAlert } from '@/components/CallNotificationAlert';
@@ -56,7 +56,7 @@ function CashierTerminalContent() {
 
   // Login form state
   const [emailInput, setEmailInput] = useState<string>('cashier1@sac.edu.ph');
-  const [windowChoice, setWindowChoice] = useState<1 | 2>(1);
+  const [windowChoice, setWindowChoice] = useState<WindowNumber>(1);
   const [otpInput, setOtpInput] = useState<string>('');
   const [otpSent, setOtpSent] = useState<boolean>(false);
   const [otpMessage, setOtpMessage] = useState<string>('');
@@ -67,11 +67,8 @@ function CashierTerminalContent() {
   const [servingDuration, setServingDuration] = useState<string>('00:00');
 
   // Currently serving ticket for this cashier's window (always picks the newest active ticket)
-  const activeCounterNum = cashierUser?.counterNumber || 1;
+  const activeCounterNum = (cashierUser?.counterNumber || 1) as WindowNumber;
   const currentTicket = nowServingTicket(activeCounterNum);
-
-  const servingC1 = nowServingTicket(1);
-  const servingC2 = nowServingTicket(2);
 
   const waitingTickets = tickets
     .filter(t => t.status === 'WAITING')
@@ -99,7 +96,7 @@ function CashierTerminalContent() {
   const announceTicket = (ticketNum: string, windowNum: number, isRecall = false) => {
     playFullAudioCall({
       ticketNumber: ticketNum,
-      windowNumber: windowNum as 1 | 2,
+      windowNumber: windowNum as WindowNumber,
       isRecall,
     }).catch(() => {});
   };
@@ -217,48 +214,35 @@ function CashierTerminalContent() {
               Cashier Terminal Login
             </h1>
             <p className="text-xs text-amber-100/90 mt-1 font-medium">
-              Window 1 &amp; Window 2 Authorized Desk &bull; Gmail OTP Authentication
+              Windows 1 to 5 Authorized Desk &bull; Gmail OTP Authentication
             </p>
           </div>
 
           <div className="p-6 sm:p-8 space-y-6 bg-white">
-            {/* Quick Switch for Cashier 1 vs Cashier 2 */}
+            {/* Quick Switch for Cashier Windows 1 to 5 */}
             <div>
               <label className="block text-xs font-bold text-[#751A1A] uppercase tracking-wider mb-2">
                 Select Official Cashier Window:
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWindowChoice(1);
-                    setEmailInput('cashier1@sac.edu.ph');
-                  }}
-                  className={`p-3 rounded-2xl text-xs font-bold border-2 transition-all cursor-pointer flex flex-col items-center justify-center ${
-                    windowChoice === 1
-                      ? 'bg-[#FFF8F1] border-[#EA671B] text-[#751A1A] shadow-xs'
-                      : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                  }`}
-                >
-                  <span className="text-base font-black">WINDOW 1</span>
-                  <span className="text-[10px] text-slate-500 font-normal">cashier1@sac.edu.ph</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWindowChoice(2);
-                    setEmailInput('cashier2@sac.edu.ph');
-                  }}
-                  className={`p-3 rounded-2xl text-xs font-bold border-2 transition-all cursor-pointer flex flex-col items-center justify-center ${
-                    windowChoice === 2
-                      ? 'bg-[#FFF8F1] border-[#EA671B] text-[#751A1A] shadow-xs'
-                      : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                  }`}
-                >
-                  <span className="text-base font-black">WINDOW 2</span>
-                  <span className="text-[10px] text-slate-500 font-normal">cashier2@sac.edu.ph</span>
-                </button>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {([1, 2, 3, 4, 5] as const).map((win) => (
+                  <button
+                    key={win}
+                    type="button"
+                    onClick={() => {
+                      setWindowChoice(win);
+                      setEmailInput(`cashier${win}@sac.edu.ph`);
+                    }}
+                    className={`p-2.5 rounded-2xl text-xs font-bold border-2 transition-all cursor-pointer flex flex-col items-center justify-center ${
+                      windowChoice === win
+                        ? 'bg-[#FFF8F1] border-[#EA671B] text-[#751A1A] shadow-xs ring-2 ring-[#EA671B]/20'
+                        : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="text-sm font-black">WINDOW {win}</span>
+                    <span className="text-[9px] text-slate-500 font-normal truncate max-w-full">cashier{win}@sac.edu.ph</span>
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -442,23 +426,24 @@ function CashierTerminalContent() {
         onDismiss={dismissCallNotification}
       />
 
-      {/* Live Windows Status Strip (What number is in now across Windows 1 & 2) */}
+      {/* Live Windows Status Strip (What number is in now across Windows 1 to 5) */}
       <div className="bg-[#FFF8F1] border-b border-[#EA671B]/25 px-3.5 sm:px-8 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs gap-2">
         <div className="flex items-center space-x-2">
-          <Radio className="w-3.5 h-3.5 text-[#EA671B] animate-pulse" />
+          <Radio className="w-3.5 h-3.5 text-[#EA671B] animate-pulse" aria-hidden="true" />
           <span className="font-extrabold text-[#751A1A] uppercase tracking-wider">
             Live Calling Status (What Number is In Now):
           </span>
         </div>
-        <div className="flex items-center space-x-2.5 font-mono font-bold flex-wrap">
-          <span className="bg-white px-2.5 py-1 rounded-lg border border-[#EA671B]/30 text-slate-800 flex items-center space-x-1.5 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Window 1: <strong className="text-[#751A1A]">{servingC1 ? servingC1.ticketNumber : 'Standby'}</strong></span>
-          </span>
-          <span className="bg-white px-2.5 py-1 rounded-lg border border-[#EA671B]/30 text-slate-800 flex items-center space-x-1.5 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Window 2: <strong className="text-[#751A1A]">{servingC2 ? servingC2.ticketNumber : 'Standby'}</strong></span>
-          </span>
+        <div className="flex items-center space-x-2 font-mono font-bold flex-wrap gap-1.5">
+          {([1, 2, 3, 4, 5] as const).map((win) => {
+            const serv = nowServingTicket(win);
+            return (
+              <span key={win} className="bg-white px-2.5 py-1 rounded-lg border border-[#EA671B]/30 text-slate-800 flex items-center space-x-1.5 shadow-2xs">
+                <span className={`w-2 h-2 rounded-full ${serv ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                <span>W-{win}: <strong className="text-[#751A1A]">{serv ? serv.ticketNumber : 'Standby'}</strong></span>
+              </span>
+            );
+          })}
         </div>
       </div>
 
