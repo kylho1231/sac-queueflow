@@ -1,12 +1,18 @@
 {
   "name": "SAC QueueFlow",
   "short_name": "QueueFlow",
-  "description": "Smart Queuing & Student Notification System for St. Anthony's College, Antique",
+  "description": "Official Smart Queuing System for St. Anthony's College, San Jose, Antique",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F0FDFA",
-  "theme_color": "#0D9488",
+  "background_color": "#FFFFFF",
+  "theme_color": "#751A1A",
   "icons": [
+    {
+      "src": "/sac-logo.png",
+      "sizes": "223x226 192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
