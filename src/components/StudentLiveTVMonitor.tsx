@@ -47,7 +47,14 @@ export default function StudentLiveTVMonitor() {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [notificationPerm, setNotificationPerm] = useState<NotificationPermission | 'unsupported'>('default');
   const [activeRosterTab, setActiveRosterTab] = useState<'waiting' | 'recent'>('waiting');
+  const [mobileViewTab, setMobileViewTab] = useState<'windows' | 'queue' | 'recent'>('windows');
   const [showAudioConsentBanner, setShowAudioConsentBanner] = useState<boolean>(false);
+
+  const handleSelectMobileTab = (tab: 'windows' | 'queue' | 'recent') => {
+    setMobileViewTab(tab);
+    if (tab === 'queue') setActiveRosterTab('waiting');
+    if (tab === 'recent') setActiveRosterTab('recent');
+  };
 
   const lastHandledCallIdRef = useRef<string | null>(null);
 
@@ -322,7 +329,7 @@ export default function StudentLiveTVMonitor() {
         <div 
           aria-live="polite" 
           aria-atomic="true"
-          className="flex items-center space-x-2 sm:space-x-2.5 w-full md:w-auto justify-between md:justify-end flex-wrap gap-1.5"
+          className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2 w-full md:w-auto"
         >
           {([1, 2, 3, 4, 5] as const).map((win) => {
             const serv = servingWindows[win];
@@ -330,28 +337,45 @@ export default function StudentLiveTVMonitor() {
             return (
               <div 
                 key={win}
-                className="bg-white border-2 border-[#EA671B]/30 rounded-xl px-2.5 py-1.5 shadow-2xs flex items-center space-x-1.5 flex-1 md:flex-initial min-w-[95px]"
+                className={`rounded-xl px-2.5 py-1.5 shadow-2xs flex items-center justify-between border-2 transition-all ${
+                  serv
+                    ? 'bg-emerald-50/90 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20'
+                    : 'bg-rose-50/90 border-rose-500 text-rose-950'
+                }`}
               >
-                <span className="text-[10px] font-extrabold text-[#751A1A] uppercase tracking-wider block">W-{win}:</span>
-                <span className="text-sm sm:text-base font-black font-mono text-[#751A1A] leading-none">
-                  {serv ? serv.ticketNumber : 'STANDBY'}
-                </span>
-                {isSen && (
-                  <span className="text-[8px] sm:text-[9px] font-black bg-[#EA671B] text-white px-1 py-0.5 rounded uppercase inline-flex items-center space-x-0.5">
-                    <HeartHandshake className="w-2 h-2 text-white shrink-0" aria-hidden="true" />
-                    <span>SR</span>
+                <div className="flex items-center space-x-1.5 min-w-0">
+                  <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider block ${
+                    serv ? 'text-emerald-900' : 'text-rose-900'
+                  }`}>
+                    W-{win}:
                   </span>
-                )}
-                {serv && (
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title={`Window ${win} Active`} />
-                )}
+                  <span className={`text-xs sm:text-sm font-black font-mono leading-none truncate ${
+                    serv ? 'text-emerald-950' : 'text-rose-800'
+                  }`}>
+                    {serv ? serv.ticketNumber : 'STANDBY'}
+                  </span>
+                  {isSen && (
+                    <span className="text-[8px] font-black bg-[#EA671B] text-white px-1 py-0.2 rounded uppercase shrink-0">
+                      SR
+                    </span>
+                  )}
+                </div>
+
+                {/* Highlight badge indicator: Green when online, Red when offline/standby */}
+                <span className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ml-1 shrink-0 ${
+                  serv
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-rose-600 text-white'
+                }`}>
+                  {serv ? 'ONLINE' : 'OFFLINE'}
+                </span>
               </div>
             );
           })}
 
           {/* Last Call Pill */}
           {latestCallNotification && (
-            <div className="hidden lg:flex items-center space-x-1.5 bg-[#751A1A] text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-2xs">
+            <div className="hidden lg:flex items-center space-x-1.5 bg-[#751A1A] text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-2xs col-span-full xl:col-auto">
               <Bell className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
               <span>Latest Call: <strong>{latestCallNotification.ticketNumber}</strong> (W-{latestCallNotification.windowNumber})</span>
             </div>
@@ -359,24 +383,66 @@ export default function StudentLiveTVMonitor() {
         </div>
       </section>
 
+      {/* MOBILE-RESPONSIVE VIEW SWITCHER: Gives students on phones instant 1-tap switching without endless scrolling */}
+      <div className="flex lg:hidden items-center justify-between bg-[#FFF8F1] p-1.5 rounded-2xl my-2 border border-[#EA671B]/30 gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={() => handleSelectMobileTab('windows')}
+          className={`flex-1 min-h-[44px] py-2 px-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+            mobileViewTab === 'windows'
+              ? 'bg-[#751A1A] text-white shadow-xs'
+              : 'text-slate-700 hover:text-[#751A1A]'
+          }`}
+        >
+          <Receipt className="w-3.5 h-3.5" />
+          <span>Windows (1-5)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleSelectMobileTab('queue')}
+          className={`flex-1 min-h-[44px] py-2 px-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+            mobileViewTab === 'queue'
+              ? 'bg-[#751A1A] text-white shadow-xs'
+              : 'text-slate-700 hover:text-[#751A1A]'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>Up Next ({upNextTickets.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleSelectMobileTab('recent')}
+          className={`flex-1 min-h-[44px] py-2 px-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+            mobileViewTab === 'recent'
+              ? 'bg-[#751A1A] text-white shadow-xs'
+              : 'text-slate-700 hover:text-[#751A1A]'
+          }`}
+        >
+          <History className="w-3.5 h-3.5" />
+          <span>Called ({recentlyCalledTickets.length})</span>
+        </button>
+      </div>
+
       {/* CENTER SECTION: 5 ACTIVE CASHIER WINDOWS & QUEUE ROSTER */}
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 my-2 sm:my-3 flex-1 items-stretch">
         {/* LEFT 8 COLS: CASHIER WINDOWS 1 TO 5 CALLING BOARDS */}
-        <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4.5">
+        <div className={`lg:col-span-8 ${mobileViewTab === 'windows' ? 'grid' : 'hidden lg:grid'} grid-cols-1 xs:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4.5`}>
           {([1, 2, 3, 4, 5] as const).map((win) => {
             const serv = servingWindows[win];
             const isSenior = serv ? isSeniorCitizenTicket(serv) : false;
             return (
               <div
                 key={win}
-                className={`bg-white rounded-2xl sm:rounded-3xl border-3 p-4 sm:p-5 flex flex-col justify-between text-center shadow-md relative overflow-hidden transition-all ${
+                className={`bg-white rounded-2xl sm:rounded-3xl border-2 sm:border-3 p-3.5 sm:p-5 flex flex-col justify-between text-center shadow-md relative overflow-hidden transition-all ${
                   serv 
-                    ? 'border-[#EA671B] shadow-amber-950/10' 
-                    : 'border-[#EA671B]/30 hover:border-[#EA671B]/60'
-                }`}
+                    ? 'border-emerald-500 bg-gradient-to-b from-emerald-50/25 via-white to-white shadow-emerald-950/5 ring-1 ring-emerald-500/20' 
+                    : 'border-rose-400 bg-gradient-to-b from-rose-50/20 via-white to-white'
+                } ${win === 5 ? 'xs:col-span-2 xl:col-span-1' : ''}`}
               >
                 {/* Top Badge */}
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 gap-1.5">
+                <div className="flex items-center justify-between pb-2 sm:pb-2.5 border-b border-slate-100 gap-1.5">
                   <div className="flex items-center space-x-1.5">
                     <span className="bg-[#751A1A] text-white font-black text-xs sm:text-sm px-2.5 sm:px-3 py-1 rounded-full uppercase tracking-wider shadow-xs">
                       WINDOW {win}
@@ -387,13 +453,16 @@ export default function StudentLiveTVMonitor() {
                       </span>
                     )}
                   </div>
-                  <span className="inline-flex items-center space-x-1 text-[10px] sm:text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                    <span>ONLINE</span>
+                  <span className={`inline-flex items-center space-x-1 text-[10px] sm:text-[11px] px-2.5 py-0.5 rounded-full border font-bold shrink-0 ${
+                    serv 
+                      ? 'text-emerald-800 bg-emerald-50 border-emerald-300' 
+                      : 'text-rose-800 bg-rose-50 border-rose-300'
+                  }`}>
+                    <span>{serv ? 'ONLINE' : 'OFFLINE'}</span>
                   </span>
                 </div>
 
-                <div className="my-auto py-3.5 sm:py-5">
+                <div className="my-auto py-2.5 sm:py-4">
                   <div className="flex items-center justify-center space-x-1.5 mb-1">
                     <span className="text-[10px] sm:text-xs uppercase tracking-widest text-[#B44606] font-black block">
                       NOW SERVING NUMBER
@@ -405,15 +474,23 @@ export default function StudentLiveTVMonitor() {
                       </span>
                     )}
                   </div>
-                  <span className="text-4xl xs:text-5xl sm:text-6xl xl:text-7xl font-black font-mono text-[#751A1A] tracking-tight block leading-none my-1.5 sm:my-2">
+                  <span className={`text-4xl xs:text-4xl sm:text-5xl xl:text-6xl font-black font-mono tracking-tight block leading-none my-1.5 sm:my-2 ${
+                    serv ? 'text-[#751A1A]' : 'text-rose-700'
+                  }`}>
                     {serv ? serv.ticketNumber : 'STANDBY'}
                   </span>
 
-                  <div className="mt-2.5 p-2.5 sm:p-3 bg-[#FFF8F1] rounded-2xl border border-[#EA671B]/20 max-w-full sm:max-w-xs mx-auto shadow-2xs">
-                    <span className="text-xs sm:text-sm font-bold text-[#751A1A] block truncate">
-                      {serv ? serv.studentName : 'Window Ready'}
+                  <div className={`mt-2 p-2 sm:p-2.5 rounded-2xl border max-w-full sm:max-w-xs mx-auto shadow-2xs ${
+                    serv 
+                      ? 'bg-[#FFF8F1] border-[#EA671B]/20' 
+                      : 'bg-rose-50/60 border-rose-200'
+                  }`}>
+                    <span className={`text-xs sm:text-sm font-bold block truncate ${
+                      serv ? 'text-[#751A1A]' : 'text-rose-900'
+                    }`}>
+                      {serv ? serv.studentName : 'Cashier Standby / Idle'}
                     </span>
-                    <span className="text-[10px] sm:text-[11px] text-[#B44606] font-mono font-semibold block mt-0.5">
+                    <span className="text-[10px] sm:text-[11px] text-slate-500 font-mono font-semibold block mt-0.5">
                       {serv 
                         ? `Called: ${formatTimeAgo(serv.calledAt)}` 
                         : 'Awaiting next queue number call'}
@@ -421,7 +498,7 @@ export default function StudentLiveTVMonitor() {
                   </div>
                 </div>
 
-                <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600 font-semibold px-1">
+                <div className="pt-2 sm:pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600 font-semibold px-1">
                   <div className="flex items-center space-x-1.5">
                     <Receipt className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
                     <span>Cashier Officer #{win}</span>
@@ -451,15 +528,15 @@ export default function StudentLiveTVMonitor() {
         </div>
 
         {/* RIGHT 4 COLS: DUAL-TAB ROSTER (UP NEXT & RECENTLY CALLED NOTIFICATIONS) */}
-        <div className="lg:col-span-4 bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-6 flex flex-col justify-between shadow-md">
+        <div className={`lg:col-span-4 ${mobileViewTab !== 'windows' ? 'flex' : 'hidden lg:flex'} bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-3.5 sm:p-6 flex-col justify-between shadow-md`}>
           <div>
             {/* Tab Selector Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 gap-2">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 gap-2 flex-wrap">
               <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-2xl">
                 <button
                   type="button"
                   onClick={() => setActiveRosterTab('waiting')}
-                  className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                  className={`min-h-[44px] px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
                     activeRosterTab === 'waiting'
                       ? 'bg-white text-[#751A1A] shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -472,18 +549,27 @@ export default function StudentLiveTVMonitor() {
                 <button
                   type="button"
                   onClick={() => setActiveRosterTab('recent')}
-                  className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                  className={`min-h-[44px] px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
                     activeRosterTab === 'recent'
                       ? 'bg-white text-[#751A1A] shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   <History className="w-3.5 h-3.5 text-[#EA671B]" aria-hidden="true" />
-                  <span>Called Log ({recentlyCalledTickets.length})</span>
+                  <span>Called ({recentlyCalledTickets.length})</span>
                 </button>
               </div>
 
-              <span className="text-xs font-bold text-[#B44606] hidden sm:inline">
+              {/* Mobile Back Button */}
+              <button
+                type="button"
+                onClick={() => setMobileViewTab('windows')}
+                className="lg:hidden text-xs text-[#751A1A] hover:underline font-bold py-1 px-2 cursor-pointer flex items-center space-x-1"
+              >
+                <span>&larr; View Windows</span>
+              </button>
+
+              <span className="text-xs font-bold text-[#B44606] hidden lg:inline">
                 Live Feed
               </span>
             </div>

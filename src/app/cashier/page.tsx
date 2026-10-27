@@ -495,13 +495,31 @@ function CashierTerminalContent() {
                 Live Calling Status (What Number is In Now):
               </span>
             </div>
-            <div className="flex items-center space-x-2 font-mono font-bold flex-wrap gap-1.5">
+            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2 w-full sm:w-auto font-mono font-bold">
               {([1, 2, 3, 4, 5] as const).map((win) => {
                 const serv = nowServingTicket(win);
                 return (
-                  <span key={win} className="bg-white px-2.5 py-1 rounded-lg border border-[#EA671B]/30 text-slate-800 flex items-center space-x-1.5 shadow-2xs">
-                    <span className={`w-2 h-2 rounded-full ${serv ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
-                    <span>W-{win}: <strong className="text-[#751A1A]">{serv ? serv.ticketNumber : 'Standby'}</strong></span>
+                  <span 
+                    key={win} 
+                    className={`px-2.5 py-1 rounded-xl border-2 flex items-center justify-between space-x-1.5 shadow-2xs transition-all ${
+                      serv 
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-1 ring-emerald-500/20' 
+                        : 'bg-rose-50 border-rose-500 text-rose-950'
+                    }`}
+                  >
+                    <span className="flex items-center space-x-1">
+                      <span className={`text-[10px] font-extrabold uppercase ${serv ? 'text-emerald-900' : 'text-rose-900'}`}>
+                        {`W-${win}:`}
+                      </span>
+                      <strong className={`text-xs ${serv ? 'text-emerald-950 font-black' : 'text-rose-800'}`}>
+                        {serv ? serv.ticketNumber : 'STANDBY'}
+                      </strong>
+                    </span>
+                    <span className={`text-[8px] font-black px-1.5 py-0.2 rounded uppercase ${
+                      serv ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                    }`}>
+                      {serv ? 'Online' : 'Offline'}
+                    </span>
                   </span>
                 );
               })}
